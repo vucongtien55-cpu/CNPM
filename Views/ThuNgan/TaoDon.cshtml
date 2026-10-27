@@ -1,0 +1,105 @@
+@model TaoDonVM
+@{
+    ViewData["Title"] = "Tạo đơn tại quầy";
+    Layout = "_StaffLayout";
+}
+
+<div class="pos">
+    <section class="pos-menu" aria-label="Thực đơn">
+        <div class="pos-tim">
+            <input id="posTim" class="input" type="search" placeholder="Tìm món (gõ có dấu hoặc không dấu, ví dụ: tra dao)" aria-label="Tìm món" autocomplete="off" />
+        </div>
+        <div class="pos-nhom-nav">
+            @foreach (var nhom in Model.DanhSachNhom)
+            {
+                <a class="cat-chip" href="#pos-nhom-@nhom.MaNhomMon">@nhom.BieuTuong @nhom.TenNhomMon</a>
+            }
+        </div>
+        @foreach (var nhom in Model.DanhSachNhom)
+        {
+            <div class="pos-nhom" id="pos-nhom-@nhom.MaNhomMon">
+                <h2>@nhom.BieuTuong @nhom.TenNhomMon</h2>
+                <div class="pos-luoi">
+                    @foreach (var mon in nhom.DanhSachMon)
+                    {
+                        var hetMon = Model.MonHetNguyenLieu.Contains(mon.MaMonAn);
+                        <button type="button" class="pos-o @(hetMon ? "pos-o-het" : "")" data-ma="@mon.MaMonAn" data-ten="@mon.TenMon" data-gia="@((long)mon.Gia)"
+                                data-tuy-chon="@(nhom.CoTuyChonDoUong ? "1" : "0")" data-tim="@mon.TenMon @mon.TenTiengAnh"
+                                data-co-size="@(Model.GiaTheoSize.ContainsKey(mon.MaMonAn) ? "1" : "0")">
+                            <span class="pos-o-ten">@mon.TenMon@(hetMon ? " ⚠️" : "")</span>
+                            <span class="pos-o-gia">@mon.Gia.Tien()@(mon.LaBanChay ? " ★" : "")</span>
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+        <p class="muted hidden" id="posKhongThay">Không tìm thấy món nào khớp.</p>
+    </section>
+
+    <aside class="pos-gio" aria-label="Đơn đang tạo">
+        <h2>Đơn tại quầy</h2>
+        <div class="cart-items" id="posItems" style="padding:0;max-height:34vh;min-height:4rem"></div>
+
+        <div class="field"><label for="posBan">Nơi phục vụ</label>
+            <select id="posBan" class="input">
+                <option value="">Mang đi</option>
+                @foreach (var ban in Model.DanhSachBan) { <option value="@ban.MaBan">Ngồi tại @ban.TenBan</option> }
+            </select>
+        </div>
+        <div class="field"><label for="posTen">Tên khách (không bắt buộc)</label><input id="posTen" class="input" maxlength="100" /></div>
+        <div class="field"><label for="posSdt">Số điện thoại (để tích điểm, không bắt buộc)</label><input id="posSdt" type="tel" class="input" maxlength="15" /></div>
+        <div class="field"><label for="posMa">Mã giảm giá (không bắt buộc)</label><input id="posMa" class="input" maxlength="30" placeholder="VD: MIXUE10" /></div>
+        <div class="field"><label for="posGhiChu">Ghi chú</label><input id="posGhiChu" class="input" maxlength="300" /></div>
+
+        <fieldset class="pos-tt">
+            <legend>Thanh toán</legend>
+            <div class="choices">
+                <label class="choice"><input type="radio" name="pay" value="1" checked /><span>Thu tiền mặt</span></label>
+                <label class="choice"><input type="radio" name="pay" value="2" /><span>Thu chuyển khoản</span></label>
+                <label class="choice" id="nhanThuSau"><input type="radio" name="pay" value="0" /><span>Thu sau</span></label>
+            </div>
+            <p class="muted" id="ghiChuThanhToan" style="font-size:.85rem;margin:.4rem 0 0"></p>
+        </fieldset>
+
+        <div class="cart-total"><span>Tổng cộng</span><span id="posTong">0đ</span></div>
+        <p class="cart-msg" id="posMsg" role="alert"></p>
+        <button type="button" class="btn btn-lg" id="posGui" disabled>Tạo đơn và bắt đầu làm</button>
+        <a class="btn btn-ghost btn-sm" asp-action="Index">Về bảng đơn hàng</a>
+    </aside>
+</div>
+
+<dialog class="opt" id="optDialog" aria-labelledby="optName">
+    <form method="dialog" id="optForm">
+        <div><h3 id="optName"></h3><p class="muted" id="optPrice" style="margin:0"></p></div>
+        <fieldset id="sizeFieldset" hidden><legend>Chọn size</legend><div class="choices" id="sizeChoices"></div></fieldset>
+        <fieldset><legend>Lượng đá</legend><div class="choices" id="iceChoices"></div></fieldset>
+        <fieldset><legend>Lượng đường</legend><div class="choices" id="sugarChoices"></div></fieldset>
+        <fieldset><legend>Thêm topping</legend><div class="choices" id="topChoices"></div></fieldset>
+        <div class="field"><label for="optNote">Ghi chú cho món này</label><input id="optNote" class="input" maxlength="200" /></div>
+        <div class="opt-foot">
+            <div class="qty">
+                <button type="button" id="optMinus" aria-label="Giảm số lượng">−</button>
+                <span id="optQty" aria-live="polite">1</span>
+                <button type="button" id="optPlus" aria-label="Tăng số lượng">+</button>
+            </div>
+            <button type="submit" class="btn" style="flex:1" id="optAdd">Thêm vào đơn</button>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" id="optCancel">Hủy</button>
+    </form>
+</dialog>
+
+<div class="toast-wrap" id="toasts" role="status" aria-live="polite"></div>
+
+<script type="application/json" id="pos-data">
+@Json.Serialize(new
+{
+    danhSachTopping = Model.DanhSachTopping.Select(t => new { ma = t.MaTopping, ten = t.TenTopping, gia = (long)t.Gia }),
+    danhSachMucDa = Model.DanhSachMucDa.Select(x => new { ma = x.MaMucDa, ten = x.TenMuc }),
+    danhSachMucDuong = Model.DanhSachMucDuong.Select(x => new { ma = x.MaMucDuong, ten = x.TenMuc }),
+    giaTheoSize = Model.GiaTheoSize.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value.Select(s => new { ma = s.MaKichCo, ten = s.TenKichCo, gia = (long)s.Gia }))
+})
+</script>
+
+@section Scripts {
+    <script src="~/js/taodon.js" asp-append-version="true"></script>
+}

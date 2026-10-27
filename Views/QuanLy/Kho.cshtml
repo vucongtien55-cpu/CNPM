@@ -1,0 +1,96 @@
+@model List<NguyenLieu>
+@{
+    ViewData["Title"] = "Tồn kho nguyên liệu";
+    Layout = "_StaffLayout";
+}
+<div class="actions" style="margin-bottom:1rem">
+    <a class="btn" asp-action="NhapKho">Lập phiếu nhập kho (kho tổng)</a>
+    <a class="btn btn-ghost" asp-action="SoKho">📒 Sổ kho (kho tổng)</a>
+    <a class="btn btn-ghost" asp-action="NguyenLieuHangNgay">📅 Nguyên liệu hàng ngày</a>
+    <a class="btn btn-ghost" asp-action="PhieuXuatKho">📤 Phiếu xuất kho chờ duyệt</a>
+    <a class="btn btn-ghost" asp-action="XuatExcelKho">⬇️ Xuất Excel</a>
+</div>
+
+<div class="panel">
+    <p class="muted" style="margin-top:0">
+        <strong>Kho tổng</strong>: nhập từ nhà cung cấp theo đơn vị nhập (chai, túi...). <strong>Kho dùng hàng ngày</strong>: theo đơn vị tính (ml, g...),
+        tự trừ theo công thức món mỗi khi lên đơn. Lập <a asp-action="NhapKho">phiếu nhập kho</a> để cộng kho tổng; nhân viên/quản lý lập
+        <a asp-controller="ThuNgan" asp-action="CanhBaoKho">phiếu xuất kho</a> để chuyển từ kho tổng sang kho dùng hàng ngày.
+    </p>
+    <h2>Thêm nguyên liệu mới</h2>
+    <form asp-action="ThemNguyenLieu" method="post" class="inline-form">
+        <input class="input" name="tenNguyenLieu" placeholder="Tên nguyên liệu" required style="width:180px" aria-label="Tên nguyên liệu" />
+        <input class="input" name="donViTinh" placeholder="Đơn vị dùng (g, ml, cái)" required style="width:130px" aria-label="Đơn vị tính" />
+        <input class="input" name="donViNhap" placeholder="Đơn vị nhập (chai, túi)" style="width:140px" aria-label="Đơn vị nhập" />
+        <input class="input" type="number" name="quyDoiSoLuong" min="0.001" step="0.001" value="1" placeholder="1 đv nhập = ? đv dùng" style="width:150px" aria-label="Quy đổi" />
+        <input class="input" type="number" name="dinhMucMoiCoc" min="0" step="0.001" placeholder="Định mức / 1 cốc" style="width:130px" aria-label="Định mức 1 cốc" />
+        <input class="input" type="number" name="soCocCanhBao" min="1" step="1" value="10" placeholder="Cảnh báo dưới (cốc)" style="width:140px" aria-label="Số cốc cảnh báo" />
+        <input class="input" type="number" name="mucToiThieuKhoTong" min="0" step="0.001" value="0" placeholder="Tối thiểu kho tổng" style="width:140px" aria-label="Mức tối thiểu kho tổng" />
+        <button class="btn btn-sm" type="submit">Thêm</button>
+    </form>
+</div>
+
+<div class="panel table-wrap">
+    <table class="tbl">
+        <tr>
+            <th>Nguyên liệu</th>
+            <th class="num">Kho dùng hàng ngày</th>
+            <th>Điều chỉnh kho dùng</th>
+            <th class="num">Kho tổng</th>
+            <th>Điều chỉnh kho tổng</th>
+            <th>Đơn vị nhập / quy đổi / định mức</th>
+        </tr>
+        @foreach (var nl in Model)
+        {
+            <tr>
+                <td><strong>@nl.TenNguyenLieu</strong>@if (!nl.DangHoatDong) { <span class="badge">Ngừng dùng</span> }</td>
+                <td class="num">
+                    <span class="badge @(nl.SapHetKhoDung ? "red" : "ok")">@nl.SoLuongTon.SoThapPhan() @nl.DonViTinh</span>
+                    @if (nl.SoCocConLai != null) { <div class="muted" style="font-size:.8rem">còn ~@nl.SoCocConLai.Value.ToString("0") cốc</div> }
+                </td>
+                <td>
+                    <form asp-action="DieuChinhTon" method="post" class="inline-form">
+                        <input type="hidden" name="ma" value="@nl.MaNguyenLieu" />
+                        <input type="hidden" name="thuocKho" value="SU_DUNG" />
+                        <input class="input" style="width:80px" type="number" name="chenhLech" step="0.001" placeholder="+/-" required aria-label="Chênh lệch kho dùng" />
+                        <input class="input" name="ghiChu" placeholder="Lý do" style="width:120px" aria-label="Lý do" />
+                        <button class="btn btn-sm btn-ghost" type="submit">Lưu</button>
+                    </form>
+                </td>
+                <td class="num">
+                    <span class="badge @(nl.SapHetKhoTong ? "red" : "ok")">@nl.SoLuongTonKhoTong.SoThapPhan() @(nl.DonViNhap ?? nl.DonViTinh)</span>
+                </td>
+                <td>
+                    <form asp-action="DieuChinhTon" method="post" class="inline-form">
+                        <input type="hidden" name="ma" value="@nl.MaNguyenLieu" />
+                        <input type="hidden" name="thuocKho" value="TONG" />
+                        <input class="input" style="width:80px" type="number" name="chenhLech" step="0.001" placeholder="+/-" required aria-label="Chênh lệch kho tổng" />
+                        <input class="input" name="ghiChu" placeholder="Lý do" style="width:120px" aria-label="Lý do" />
+                        <button class="btn btn-sm btn-ghost" type="submit">Lưu</button>
+                    </form>
+                </td>
+                <td>
+                    <form asp-action="CapNhatDinhMucKho" method="post" class="inline-form">
+                        <input type="hidden" name="ma" value="@nl.MaNguyenLieu" />
+                        <input class="input" name="donViNhap" value="@nl.DonViNhap" placeholder="Đơn vị nhập" style="width:110px" aria-label="Đơn vị nhập" />
+                        <label style="font-size:.78rem">1 đv nhập =
+                            <input class="input" type="number" name="quyDoiSoLuong" min="0.001" step="0.001" value="@nl.QuyDoiSoLuong.SoThapPhan()" style="width:80px" aria-label="Quy đổi" />
+                            @nl.DonViTinh
+                        </label>
+                        <label style="font-size:.78rem">1 cốc =
+                            <input class="input" type="number" name="dinhMucMoiCoc" min="0" step="0.001" value="@nl.DinhMucMoiCoc?.SoThapPhan()" placeholder="chưa đặt" style="width:80px" aria-label="Định mức 1 cốc" />
+                            @nl.DonViTinh
+                        </label>
+                        <label style="font-size:.78rem">Báo khi còn ≤
+                            <input class="input" type="number" name="soCocCanhBao" min="1" step="1" value="@nl.SoCocCanhBao" style="width:55px" aria-label="Số cốc cảnh báo" /> cốc
+                        </label>
+                        <label style="font-size:.78rem">Tối thiểu kho tổng
+                            <input class="input" type="number" name="mucToiThieuKhoTong" min="0" step="0.001" value="@nl.MucToiThieuKhoTong.SoThapPhan()" style="width:80px" aria-label="Mức tối thiểu kho tổng" />
+                        </label>
+                        <button class="btn btn-sm btn-ghost" type="submit">Lưu</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </table>
+</div>

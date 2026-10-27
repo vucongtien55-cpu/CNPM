@@ -1,0 +1,31 @@
+@model List<KhachHangVM>
+@{
+    ViewData["Title"] = "Khách hàng thân thiết";
+    Layout = "_StaffLayout";
+}
+
+<div class="panel table-wrap">
+    <h2>Khách hàng thân thiết (@Model.Count)</h2>
+    <p class="muted">Chỉ hiển thị khách đã để lại số điện thoại khi đặt hàng. Sắp xếp theo tổng chi tiêu giảm dần.</p>
+    @if (Model.Count == 0)
+    {
+        <p class="muted">Chưa có khách hàng nào để lại số điện thoại.</p>
+    }
+    else
+    {
+        <table class="tbl">
+            <tr><th>Số điện thoại</th><th>Họ tên</th><th class="num">Số đơn</th><th class="num">Tổng chi tiêu</th><th class="num">Điểm tích lũy</th><th>Lần mua gần nhất</th></tr>
+            @foreach (var kh in Model)
+            {
+                <tr>
+                    <td><strong>@kh.SoDienThoai</strong></td>
+                    <td>@(kh.HoTen ?? "-")</td>
+                    <td class="num">@kh.SoDonDaMua</td>
+                    <td class="num">@kh.TongChiTieu.Tien()</td>
+                    <td class="num"><span class="badge sun">@kh.DiemTichLuy điểm</span></td>
+                    <td>@(kh.LanCuoiMua?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                </tr>
+            }
+        </table>
+    }
+</div>

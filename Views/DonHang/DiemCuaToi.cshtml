@@ -1,0 +1,35 @@
+@model DiemCuaToiVM
+@{
+    ViewData["Title"] = "Điểm của tôi";
+}
+
+<div class="container" style="max-width:480px;padding-top:1.5rem;padding-bottom:3rem">
+    <h1>⭐ Điểm của tôi</h1>
+    <p class="muted">Tra số điểm thân thiết bạn đã tích lũy khi mua hàng có để lại số điện thoại.</p>
+
+    <form method="get" asp-action="DiemCuaToi" class="dct-form" style="display:flex;gap:.5rem;margin:1rem 0">
+        <input type="tel" name="soDienThoai" value="@Model.SoDienThoai" placeholder="Nhập số điện thoại của bạn"
+               class="dct-input" style="flex:1" maxlength="15" />
+        <button type="submit" class="btn">Tra điểm</button>
+    </form>
+
+    @if (string.IsNullOrEmpty(Model.SoDienThoai))
+    {
+        <p class="muted">Nhập số điện thoại bạn đã dùng khi đặt hàng để xem điểm.</p>
+    }
+    else if (Model.DiemTichLuy == 0 && Model.TongChiTieu == 0)
+    {
+        <p class="muted">Chưa tìm thấy điểm tích lũy cho số @Model.SoDienThoai. Hãy để lại số điện thoại khi đặt hàng để bắt đầu tích điểm nhé!</p>
+    }
+    else
+    {
+        <div class="diem-the" style="background:var(--red,#E4002B);color:#fff;border-radius:1rem;padding:1.5rem;text-align:center">
+            <div style="font-size:.9rem;opacity:.85">Số điện thoại @Model.SoDienThoai</div>
+            <div style="font-size:2.5rem;font-weight:700;margin:.3rem 0">@Model.DiemTichLuy <span style="font-size:1rem;font-weight:400">điểm</span></div>
+            <div style="font-size:.9rem;opacity:.85">Tổng chi tiêu tích lũy: @Model.TongChiTieu.Tien()</div>
+        </div>
+        <p class="muted" style="margin-top:1rem">Cứ mỗi @(((decimal)Model.SoDongTichMotDiem).Tien()) thanh toán, bạn được tích 1 điểm. Điểm chỉ được tích khi để lại số điện thoại lúc đặt hàng.</p>
+    }
+
+    <a class="btn btn-outline" asp-controller="ThucDon" asp-action="Index" style="margin-top:1rem;display:inline-block">Tiếp tục đặt món</a>
+</div>

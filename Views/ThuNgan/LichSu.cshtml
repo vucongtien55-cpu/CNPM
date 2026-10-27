@@ -1,0 +1,83 @@
+@model LichSuThuNganVM
+@{
+    ViewData["Title"] = "Lịch sử đơn hàng";
+    Layout = "_StaffLayout";
+    string Ngay(DateTime ngay) => ngay.ToString("yyyy-MM-dd");
+    var quayLai = Context.Request.Path.Value + Context.Request.QueryString.Value;
+}
+
+<div class="panel no-print">
+    <form method="get" asp-action="LichSu" class="inline-form">
+        <label>Từ ngày <input class="input" type="date" name="tuNgay" value="@Ngay(Model.TuNgay)" /></label>
+        <label>Đến ngày <input class="input" type="date" name="denNgay" value="@Ngay(Model.DenNgay)" /></label>
+        <label>Trạng thái
+            <select class="input" name="trangThai">
+                <option value="">Tất cả</option>
+                @foreach (var ma in new[] { 1, 2, 3, 4, 5 })
+                {
+                    <option value="@ma" selected="@(Model.TrangThai == ma)">@HangSoTrangThai.Ten(ma)</option>
+                }
+            </select>
+        </label>
+        <label>Thu tiền
+            <select class="input" name="thanhToan">
+                <option value="" selected="@(string.IsNullOrEmpty(Model.ThanhToan))">Tất cả</option>
+                <option value="da" selected="@(Model.ThanhToan == "da")">Đã thu</option>
+                <option value="chua" selected="@(Model.ThanhToan == "chua")">Chưa thu</option>
+            </select>
+        </label>
+        <label>Tìm mã đơn / tên khách <input class="input" name="tuKhoa" value="@Model.TuKhoa" placeholder="MX2609... hoặc tên" style="width:190px" /></label>
+        <button class="btn btn-sm" type="submit">Lọc</button>
+    </form>
+    <div class="actions" style="margin-top:.8rem">
+        <a class="btn btn-sm btn-ghost" asp-action="LichSu" asp-route-tuNgay="@Ngay(DateTime.Today)" asp-route-denNgay="@Ngay(DateTime.Today)">Hôm nay</a>
+        <a class="btn btn-sm btn-ghost" asp-action="LichSu" asp-route-tuNgay="@Ngay(DateTime.Today.AddDays(-1))" asp-route-denNgay="@Ngay(DateTime.Today.AddDays(-1))">Hôm qua</a>
+        <a class="btn btn-sm btn-ghost" asp-action="LichSu" asp-route-tuNgay="@Ngay(DateTime.Today.AddDays(-6))" asp-route-denNgay="@Ngay(DateTime.Today)">7 ngày gần nhất</a>
+        <a class="btn btn-sm btn-ink" asp-action="DoiSoat" asp-route-ngay="@Ngay(Model.DenNgay)">Đối soát ngày @Model.DenNgay.ToString("dd/MM")</a>
+    </div>
+</div>
+
+<div class="stats">
+    <div class="stat"><div class="k">Số đơn hiển thị</div><div class="v">@Model.DanhSachDong.Count</div></div>
+    <div class="stat ok"><div class="k">Tổng tiền đã thu (trong các đơn này)</div><div class="v">@Model.TongDaThu.Tien()</div></div>
+    <div class="stat @(Model.SoDonChuaThu > 0 ? "red" : "")"><div class="k">Đơn chưa thu tiền</div><div class="v">@Model.SoDonChuaThu</div></div>
+</div>
+
+<div class="panel table-wrap">
+    @if (Model.DaCatBot) { <p class="err">Chỉ hiển thị 300 đơn mới nhất. Hãy thu hẹp khoảng ngày hoặc thêm bộ lọc.</p> }
+    <table class="tbl">
+        <tr><th>Thời gian</th><th>Mã đơn</th><th>Nơi phục vụ</th><th>Món</th><th class="num">Tổng tiền</th><th>Trạng thái</th><th>Thu tiền</th><th>Người xử lý</th></tr>
+        @foreach (var dong in Model.DanhSachDong)
+        {
+            <tr>
+                <td>@dong.NgayTao.ToString("dd/MM HH:mm")</td>
+                <td><strong>@dong.MaTheoDoi</strong>@if (!string.IsNullOrEmpty(dong.TenKhach)) { <div class="muted" style="font-size:.82rem">@dong.TenKhach</div> }</td>
+                <td>@dong.NoiPhucVu</td>
+                <td style="max-width:320px;font-size:.88rem">@dong.MoTaMon</td>
+                <td class="num">@dong.TongTien.Tien()</td>
+                <td><span class="badge @DinhDang.LopTrangThai(dong.MaTrangThai)">@HangSoTrangThai.Ten(dong.MaTrangThai)</span></td>
+                <td>
+                    @if (dong.NgayThanhToan != null)
+                    {
+                        <span class="badge ok">@HangSoPhuongThuc.Ten(dong.MaPhuongThuc ?? 0)</span>
+                        <div class="muted" style="font-size:.8rem">@dong.NgayThanhToan.Value.ToString("dd/MM HH:mm")@(dong.NguoiThuTien != null ? " - " + dong.NguoiThuTien : "")</div>
+                    }
+                    else if (dong.MaTrangThai == HangSoTrangThai.DaHuy)
+                    {
+                        <span class="muted">-</span>
+                    }
+                    else
+                    {
+                        <form asp-action="ThuTien" method="post" class="inline-form">
+                            <input type="hidden" name="ma" value="@dong.MaDonHang" /><input type="hidden" name="quayLai" value="@quayLai" />
+                            <button class="btn btn-sm btn-ink" type="submit" name="maPhuongThuc" value="@HangSoPhuongThuc.TienMat">Tiền mặt</button>
+                            <button class="btn btn-sm btn-ink" type="submit" name="maPhuongThuc" value="@HangSoPhuongThuc.ChuyenKhoan" data-qr-don="@dong.MaDonHang">Chuyển khoản (QR)</button>
+                        </form>
+                    }
+                </td>
+                <td>@(dong.NguoiXuLy ?? "-")</td>
+            </tr>
+        }
+    </table>
+    @if (Model.DanhSachDong.Count == 0) { <p class="muted" style="padding:1rem">Không có đơn nào khớp bộ lọc.</p> }
+</div>

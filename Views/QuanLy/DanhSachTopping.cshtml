@@ -1,0 +1,25 @@
+@model List<Topping>
+@{
+    ViewData["Title"] = "Topping";
+    Layout = "_StaffLayout";
+}
+<div class="panel">
+    <div class="dong-form dau"><span>Tên topping</span><span>Giá (đồng)</span><span>Đang bán</span><span></span></div>
+    @foreach (var tp in Model)
+    {
+        <form asp-action="LuuTopping" method="post" class="dong-form">
+            <input type="hidden" name="maTopping" value="@tp.MaTopping" />
+            <input class="input" name="tenTopping" value="@tp.TenTopping" required aria-label="Tên topping" />
+            <input class="input" type="number" min="0" step="500" name="gia" value="@((long)tp.Gia)" required aria-label="Giá" />
+            <input type="checkbox" name="dangBan" value="true" @(tp.DangBan ? "checked" : "") aria-label="Đang bán" />
+            <button class="btn btn-sm" type="submit">Lưu</button>
+        </form>
+    }
+    <form asp-action="LuuTopping" method="post" class="dong-form">
+        <input type="hidden" name="maTopping" value="0" />
+        <input class="input" name="tenTopping" placeholder="Topping mới" required aria-label="Tên topping mới" />
+        <input class="input" type="number" min="0" step="500" name="gia" value="3000" required aria-label="Giá" />
+        <input type="checkbox" name="dangBan" value="true" checked aria-label="Đang bán" />
+        <button class="btn btn-sm btn-ghost" type="submit">Thêm</button>
+    </form>
+</div>

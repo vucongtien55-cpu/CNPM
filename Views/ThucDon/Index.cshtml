@@ -1,0 +1,194 @@
+@model ThucDonVM
+@{
+    ViewData["Title"] = "Thực đơn";
+}
+
+<section class="menu-top">
+    <div class="container">
+        <h1>Thực đơn</h1>
+        @if (!string.IsNullOrEmpty(Model.TenBan))
+        {
+            <div class="place-strip">Bạn đang ngồi <strong>@Model.TenBan</strong> <a asp-action="MangDi">Đổi sang mang đi</a></div>
+        }
+        else
+        {
+            <div class="place-strip">Đơn mang đi: thanh toán tại quầy trước, quán sẽ pha chế ngay sau khi nhận tiền. Muốn gọi tại bàn? Hãy quét mã QR trên bàn.</div>
+        }
+    </div>
+</section>
+
+@if (!Model.DuocDatHang)
+{
+    <div class="container"><div class="canh-bao-dong" role="alert">⏰ @Model.ThongBaoDongCua</div></div>
+}
+
+<nav class="cat-nav" aria-label="Nhóm món">
+    <div class="container">
+        @foreach (var nhom in Model.DanhSachNhom)
+        {
+            <a class="cat-chip" href="#nhom-@nhom.MaNhomMon" data-cat="nhom-@nhom.MaNhomMon">@nhom.BieuTuong @nhom.TenNhomMon</a>
+        }
+    </div>
+</nav>
+
+<div class="container menu-tim">
+    <div class="menu-tim-o">
+        <span class="menu-tim-icon" aria-hidden="true">🔍</span>
+        <input type="search" id="timMon" class="input" placeholder="Tìm món, ví dụ: tra dao, kem..." aria-label="Tìm món" autocomplete="off" />
+        <button type="button" class="icon-btn hidden" id="timMonXoa" aria-label="Xóa tìm kiếm">✕</button>
+    </div>
+</div>
+
+@if (Model.MonBanChayTuan.Count > 0)
+{
+    <section class="container goi-y-tuan">
+        <h2>🔥 Được đặt nhiều nhất tuần này</h2>
+        <div class="goi-y-cuon">
+            @foreach (var mon in Model.MonBanChayTuan)
+            {
+                <article class="goi-y-the" data-tim-toi="mon-@mon.MaMonAn">
+                    <div class="goi-y-the-anh">
+                        @if (!string.IsNullOrEmpty(mon.DuongDanAnh)) { <img src="@mon.DuongDanAnh" alt="@mon.TenMon" loading="lazy" /> }
+                        else { <span class="emoji" aria-hidden="true">🧋</span> }
+                    </div>
+                    <div class="goi-y-the-ten">@mon.TenMon</div>
+                    <div class="goi-y-the-gia">@mon.Gia.TienRutGon()</div>
+                </article>
+            }
+        </div>
+    </section>
+}
+
+<div class="container menu-body">
+    <p class="muted hidden" id="timMonKhongThay" style="text-align:center;padding:2rem 0">Không tìm thấy món nào khớp với tìm kiếm của bạn.</p>
+    @foreach (var nhom in Model.DanhSachNhom)
+    {
+        var mauNen = ((nhom.MaNhomMon - 1) % 4) + 1;
+        <section class="menu-cat" id="nhom-@nhom.MaNhomMon">
+            <h2><span class="ic" aria-hidden="true">@nhom.BieuTuong</span>@nhom.TenNhomMon</h2>
+            <div class="grid-products">
+                @foreach (var mon in nhom.DanhSachMon)
+                {
+                    var hetMon = Model.MonHetNguyenLieu.Contains(mon.MaMonAn);
+                    <article class="p-card @(hetMon ? "het-mon" : "")" id="mon-@mon.MaMonAn" data-tim="@mon.TenMon @mon.TenTiengAnh">
+                        @if (hetMon) { <span class="nhan-het-mon">Tạm hết</span> }
+                        else if (mon.LaBanChay) { <span class="tag-best">Bán chạy</span> }
+                        <div class="price-bubble" title="@mon.Gia.Tien()">@mon.Gia.TienRutGon()</div>
+                        <div class="p-media tint-@mauNen">
+                            @if (!string.IsNullOrEmpty(mon.DuongDanAnh)) { <img src="@mon.DuongDanAnh" alt="@mon.TenMon" loading="lazy" /> }
+                            else { <span class="emoji" aria-hidden="true">@nhom.BieuTuong</span> }
+                        </div>
+                        <div class="p-body">
+                            <h3 class="p-name">@mon.TenMon</h3>
+                            <p class="p-en">@mon.TenTiengAnh</p>
+                            @{ var thongKe = Model.ThongKe.GetValueOrDefault(mon.MaMonAn) ?? new ThongKeDanhGia(); }
+                            <div class="danh-gia">
+                                @if (thongKe.SoLuot > 0)
+                                {
+                                    <button type="button" class="danh-gia-nut" data-ma="@mon.MaMonAn" data-ten="@mon.TenMon" title="Xem đánh giá của khách">
+                                        <partial name="_DanhGiaSao" model="thongKe" />
+                                    </button>
+                                }
+                                else
+                                {
+                                    <partial name="_DanhGiaSao" model="thongKe" />
+                                }
+                            </div>
+                            @if (hetMon)
+                            {
+                                <button type="button" class="btn btn-ghost btn-sm" disabled>Tạm hết hàng</button>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-ghost btn-sm add-btn"
+                                        data-ma="@mon.MaMonAn" data-ten="@mon.TenMon" data-gia="@((long)mon.Gia)"
+                                        data-tuy-chon="@(nhom.CoTuyChonDoUong ? "1" : "0")"
+                                        data-co-size="@(Model.GiaTheoSize.ContainsKey(mon.MaMonAn) ? "1" : "0")">Thêm vào giỏ</button>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        </section>
+    }
+</div>
+
+<div class="cart-bar" id="cartBar" role="button" tabindex="0" aria-label="Mở giỏ hàng">
+    <span><span class="count" id="barCount">0</span>món trong giỏ</span>
+    <span id="barTotal">0đ</span>
+</div>
+<div class="scrim" id="scrim"></div>
+
+<aside class="cart" id="cart" aria-label="Giỏ hàng">
+    <div class="cart-head">
+        <h2>Giỏ hàng</h2>
+        <button type="button" class="icon-btn" id="cartClose" aria-label="Đóng giỏ hàng">✕</button>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div id="khuHayMuaCung" class="hay-mua-cung hidden"></div>
+    <div class="cart-foot">
+        <div class="field"><label for="custName">Tên của bạn (không bắt buộc)</label><input id="custName" class="input" maxlength="100" placeholder="Ví dụ: Lan" /></div>
+        <div class="field"><label for="custPhone">Số điện thoại (để tích điểm, không bắt buộc)</label><input id="custPhone" type="tel" class="input" maxlength="15" placeholder="Ví dụ: 0912345678" /></div>
+        <div class="field"><label for="custNote">Ghi chú cho quán</label><input id="custNote" class="input" maxlength="300" /></div>
+        <div class="field hang-ma-giam-gia">
+            <label for="maGiamGia">Mã giảm giá</label>
+            <div style="display:flex;gap:.5rem">
+                <input id="maGiamGia" class="input" maxlength="30" placeholder="Ví dụ: MIXUE10" style="flex:1" />
+                <button type="button" class="btn btn-ghost btn-sm" id="apDungMa">Áp dụng</button>
+            </div>
+            <p class="ma-giam-gia-ket-qua hidden" id="maGiamGiaKetQua"></p>
+        </div>
+        <div class="cart-total" id="hangTongGoc" style="display:none"><span>Tạm tính</span><span id="cartTongGoc">0đ</span></div>
+        <div class="cart-total giam-gia" id="hangTienGiam" style="display:none"><span>Giảm giá</span><span id="cartTienGiam">0đ</span></div>
+        <div class="cart-total"><span>Tổng cộng</span><span id="cartTotal">0đ</span></div>
+        <p class="cart-msg" id="cartMsg" role="alert"></p>
+        <button type="button" class="btn btn-lg" id="sendOrder">Gửi đơn cho quán</button>
+        <p class="muted" style="font-size:.85rem;margin:0">@(string.IsNullOrEmpty(Model.TenBan) ? "Đơn mang đi: bạn cần thanh toán tại quầy trước, quán sẽ bắt đầu pha chế sau khi nhận tiền." : "Bạn ngồi tại bàn nên có thể thanh toán tại quầy sau khi dùng xong.")</p>
+    </div>
+</aside>
+
+<dialog class="opt" id="optDialog" aria-labelledby="optName">
+    <form method="dialog" id="optForm">
+        <div>
+            <h3 id="optName"></h3>
+            <p class="muted" id="optPrice" style="margin:0"></p>
+        </div>
+        <fieldset id="sizeFieldset" hidden><legend>Chọn size</legend><div class="choices" id="sizeChoices"></div></fieldset>
+        <fieldset><legend>Lượng đá</legend><div class="choices" id="iceChoices"></div></fieldset>
+        <fieldset><legend>Lượng đường</legend><div class="choices" id="sugarChoices"></div></fieldset>
+        <fieldset><legend>Thêm topping</legend><div class="choices" id="topChoices"></div></fieldset>
+        <div class="field"><label for="optNote">Ghi chú cho món này</label><input id="optNote" class="input" maxlength="200" /></div>
+        <div class="opt-foot">
+            <div class="qty">
+                <button type="button" id="optMinus" aria-label="Giảm số lượng">−</button>
+                <span id="optQty" aria-live="polite">1</span>
+                <button type="button" id="optPlus" aria-label="Tăng số lượng">+</button>
+            </div>
+            <button type="submit" class="btn" style="flex:1" id="optAdd">Thêm vào giỏ</button>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" id="optCancel">Hủy</button>
+    </form>
+</dialog>
+
+<dialog class="opt" id="dgDialog" aria-labelledby="dgTen">
+    <div style="display:grid;gap:1rem;padding:1.4rem;max-height:86vh;overflow:auto">
+        <h3 id="dgTen" style="margin:0"></h3>
+        <div id="dgNoiDung"></div>
+        <button type="button" class="btn btn-ghost btn-sm" id="dgDong">Đóng</button>
+    </div>
+</dialog>
+
+<script type="application/json" id="menu-data">
+@Json.Serialize(new
+{
+    duocDatHang = Model.DuocDatHang,
+    danhSachTopping = Model.DanhSachTopping.Select(t => new { ma = t.MaTopping, ten = t.TenTopping, gia = (long)t.Gia, hetHang = Model.ToppingHetNguyenLieu.Contains(t.MaTopping) }),
+    danhSachMucDa = Model.DanhSachMucDa.Select(x => new { ma = x.MaMucDa, ten = x.TenMuc }),
+    danhSachMucDuong = Model.DanhSachMucDuong.Select(x => new { ma = x.MaMucDuong, ten = x.TenMuc }),
+    giaTheoSize = Model.GiaTheoSize.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value.Select(s => new { ma = s.MaKichCo, ten = s.TenKichCo, gia = (long)s.Gia }))
+})
+</script>
+
+@section Scripts {
+    <script src="~/js/thucdon.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,21 @@
+@model List<BanAn>
+@{
+    ViewData["Title"] = "In mã QR các bàn";
+    Layout = "_StaffLayout";
+    var tenQuan = CauHinh["CuaHang:Ten"] ?? "MIXUE";
+}
+<div class="actions no-print" style="margin-bottom:1rem">
+    <button class="btn" type="button" onclick="window.print()">In trang này</button>
+    <a class="btn btn-ghost" asp-action="DanhSachBan">Quay lại</a>
+</div>
+<div class="qr-grid">
+    @foreach (var ban in Model)
+    {
+        <div class="qr-card">
+            <strong>☃️ @tenQuan</strong>
+            <img src="@Url.Action("AnhQrBan", "QuanLy", new { ma = ban.MaBan })" alt="Mã QR @ban.TenBan" />
+            <h3>@ban.TenBan</h3>
+            <p style="margin:.3rem 0 0">Quét mã để xem thực đơn và gọi món</p>
+        </div>
+    }
+</div>

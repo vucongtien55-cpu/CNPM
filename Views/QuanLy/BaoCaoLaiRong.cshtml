@@ -1,0 +1,114 @@
+@model BaoCaoLaiRongVM
+@{
+    ViewData["Title"] = "Lãi ròng theo tháng";
+    Layout = "_StaffLayout";
+    var cacThang = Enumerable.Range(1, 12);
+    var namHienTai = DateTime.Today.Year;
+    var cacNam = Enumerable.Range(namHienTai - 3, 4);
+}
+
+<div class="panel no-print">
+    <form method="get" asp-action="BaoCaoLaiRong" class="inline-form">
+        <label>Tháng
+            <select class="input" name="thang">
+                @foreach (var t in cacThang)
+                {
+                    <option value="@t" selected="@(t == Model.Thang)">Tháng @t</option>
+                }
+            </select>
+        </label>
+        <label>Năm
+            <select class="input" name="nam">
+                @foreach (var n in cacNam)
+                {
+                    <option value="@n" selected="@(n == Model.Nam)">@n</option>
+                }
+            </select>
+        </label>
+        <button class="btn btn-sm" type="submit">Xem</button>
+        <a class="btn btn-sm btn-ghost" asp-action="XuatExcelLaiRong" asp-route-thang="@Model.Thang" asp-route-nam="@Model.Nam">⬇️ Xuất Excel</a>
+        <a class="btn btn-sm btn-ghost" asp-action="BaoCaoLaiGop">Xem chi tiết theo món →</a>
+    </form>
+</div>
+
+@if (TempData["ThanhCong"] != null)
+{
+    <div class="panel"><p class="ok" style="margin:0">@TempData["ThanhCong"]</p></div>
+}
+@if (TempData["CanhBao"] != null)
+{
+    <div class="panel"><p class="canh-bao-dong" style="margin:0">@TempData["CanhBao"]</p></div>
+}
+@if (Model.CoMonThieuGiaVon)
+{
+    <div class="panel"><p class="canh-bao-dong" style="margin:0">⚠️ Một số món chưa tính được giá vốn (chưa khai báo công thức hoặc nguyên liệu chưa từng nhập kho) — lãi gộp/lãi ròng bên dưới chỉ mang tính tham khảo cho tới khi khai báo đủ.</p></div>
+}
+
+<div class="panel cards-tong-quan" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem">
+    <div><div class="muted">Doanh thu tháng @Model.Thang/@Model.Nam</div><div style="font:800 1.3rem var(--font-display)">@Model.TongDoanhThu.Tien()</div></div>
+    <div><div class="muted">Giá vốn</div><div style="font:800 1.3rem var(--font-display)">@Model.TongGiaVon.Tien()</div></div>
+    <div><div class="muted">Lãi gộp</div><div style="font:800 1.3rem var(--font-display)">@Model.TongLaiGop.Tien()</div></div>
+    <div><div class="muted">Chi phí vận hành</div><div style="font:800 1.3rem var(--font-display);color:var(--red)">− @Model.TongChiPhi.Tien()</div></div>
+    <div><div class="muted">Lãi ròng</div><div style="font:800 1.5rem var(--font-display);color:@(Model.LaiRong >= 0 ? "var(--ok)" : "var(--red)")">@Model.LaiRong.Tien()</div>
+        <span class="badge @(Model.TyLeLaiRong >= 20 ? "ok" : Model.TyLeLaiRong >= 0 ? "warn" : "red")">@Model.TyLeLaiRong.ToString("0.0")% doanh thu</span>
+    </div>
+</div>
+
+<div class="panel">
+    <h3 style="margin-top:0">Thêm chi phí vận hành cho tháng @Model.Thang/@Model.Nam</h3>
+    <form method="post" asp-action="ThemChiPhi" class="inline-form">
+        <input type="hidden" name="Thang" value="@Model.Thang" />
+        <input type="hidden" name="Nam" value="@Model.Nam" />
+        <label>Loại chi phí
+            <select class="input" name="LoaiChiPhi">
+                @foreach (var (ma, ten) in HangSoLoaiChiPhi.TatCa)
+                {
+                    <option value="@ma">@ten</option>
+                }
+            </select>
+        </label>
+        <label>Số tiền <input class="input" type="number" name="SoTien" min="0" step="1000" placeholder="VD: 15000000" required style="width:11rem" /></label>
+        <label>Ghi chú <input class="input" type="text" name="GhiChu" placeholder="Không bắt buộc" style="width:14rem" /></label>
+        <button class="btn btn-sm" type="submit">Thêm</button>
+    </form>
+</div>
+
+<div class="panel table-wrap">
+    @if (Model.DanhSachChiPhi.Count == 0)
+    {
+        <p class="muted">Chưa nhập chi phí vận hành nào cho tháng này.</p>
+    }
+    else
+    {
+        <table class="tbl">
+            <tr><th>Loại chi phí</th><th class="num">Số tiền</th><th>Ghi chú</th><th>Người nhập</th><th></th></tr>
+            @foreach (var cp in Model.DanhSachChiPhi)
+            {
+                <tr>
+                    <td>@HangSoLoaiChiPhi.Ten(cp.LoaiChiPhi)</td>
+                    <td class="num" style="min-width:10rem">
+                        <form method="post" asp-action="SuaChiPhi" class="inline-form">
+                            <input type="hidden" name="ma" value="@cp.MaChiPhi" />
+                            <input class="input" type="number" name="soTien" min="0" step="1000" value="@cp.SoTien" style="width:9rem;text-align:right" />
+                            <input type="hidden" name="ghiChu" value="@cp.GhiChu" />
+                            <button class="btn btn-sm btn-ghost" type="submit" title="Lưu số tiền mới">💾</button>
+                        </form>
+                    </td>
+                    <td>@(cp.GhiChu ?? "—")</td>
+                    <td class="muted">@(cp.NguoiTao?.HoTen ?? "—")</td>
+                    <td>
+                        <form method="post" asp-action="XoaChiPhi" class="inline-form" onsubmit="return confirm('Xóa khoản chi phí này?');">
+                            <input type="hidden" name="ma" value="@cp.MaChiPhi" />
+                            <button class="btn btn-sm btn-ghost" type="submit" style="color:var(--red)">Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            <tr>
+                <td style="font-weight:700">Tổng chi phí</td>
+                <td class="num" style="font-weight:700">@Model.TongChiPhi.Tien()</td>
+                <td colspan="3"></td>
+            </tr>
+        </table>
+    }
+</div>

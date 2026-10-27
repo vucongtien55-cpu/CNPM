@@ -1,0 +1,141 @@
+@model DoiSoatVM
+@{
+    ViewData["Title"] = "Đối soát cuối ngày";
+    Layout = "_StaffLayout";
+    string Ngay(DateTime ngay) => ngay.ToString("yyyy-MM-dd");
+    var quayLai = Context.Request.Path.Value + Context.Request.QueryString.Value;
+    var laHomNay = Model.Ngay == DateTime.Today;
+    string Chenh(decimal so) => so == 0 ? "Khớp" : so > 0 ? "Thừa " + so.Tien() : "Thiếu " + (-so).Tien();
+    string LopChenh(decimal so) => so == 0 ? "ok" : so > 0 ? "warn" : "red";
+}
+
+<div class="panel no-print">
+    <form method="get" asp-action="DoiSoat" class="inline-form">
+        <a class="btn btn-sm btn-ghost" asp-action="DoiSoat" asp-route-ngay="@Ngay(Model.Ngay.AddDays(-1))">Ngày trước</a>
+        <label>Ngày <input class="input" type="date" name="ngay" value="@Ngay(Model.Ngay)" max="@Ngay(DateTime.Today)" onchange="this.form.submit()" /></label>
+        @if (!laHomNay) { <a class="btn btn-sm btn-ghost" asp-action="DoiSoat" asp-route-ngay="@Ngay(Model.Ngay.AddDays(1))">Ngày sau</a> }
+        <a class="btn btn-sm" asp-action="DoiSoat" asp-route-ngay="@Ngay(DateTime.Today)">Hôm nay</a>
+        <button class="btn btn-sm btn-ink" type="button" onclick="window.print()">In phiếu đối soát</button>
+        <a class="btn btn-sm btn-ghost" asp-action="XuatExcelDoiSoat" asp-route-ngay="@Ngay(Model.Ngay)">⬇️ Xuất Excel</a>
+    </form>
+</div>
+
+<h2>Ngày @Model.Ngay.ToString("dd/MM/yyyy")</h2>
+<div class="stats">
+    <div class="stat red"><div class="k">Tổng doanh thu đã thu</div><div class="v">@Model.Tong.Tien()</div><div class="muted" style="font-size:.85rem">@(Model.SoDonTienMat + Model.SoDonChuyenKhoan) đơn</div></div>
+    <div class="stat ok"><div class="k">Tiền mặt (phải có trong két)</div><div class="v">@Model.TienMat.Tien()</div><div class="muted" style="font-size:.85rem">@Model.SoDonTienMat đơn</div></div>
+    <div class="stat"><div class="k">Chuyển khoản (đối chiếu sao kê)</div><div class="v">@Model.ChuyenKhoan.Tien()</div><div class="muted" style="font-size:.85rem">@Model.SoDonChuyenKhoan đơn</div></div>
+    <div class="stat @(Model.DanhSachChuaThu.Count > 0 ? "sun" : "")"><div class="k">Đơn chưa thu tiền</div><div class="v">@Model.DanhSachChuaThu.Count</div><div class="muted" style="font-size:.85rem">Trị giá @Model.TienChuaThu.Tien()</div></div>
+    <div class="stat"><div class="k">Đơn đã hủy</div><div class="v">@Model.SoDonHuy</div></div>
+</div>
+
+<div class="panel no-print" id="khuKiemDem" data-tien-mat="@((long)Model.TienMat)">
+    <h2>Kiểm đếm tiền mặt trong két</h2>
+    <p class="muted">Hệ thống ghi nhận tiền mặt thu trong ngày là <strong>@Model.TienMat.Tien()</strong>. Nhập tiền lẻ để sẵn đầu ca và số tiền thực đếm để xem có chênh lệch không.</p>
+    <form asp-action="LuuDoiSoat" method="post" class="form-grid cols" style="max-width:760px">
+        <input type="hidden" name="ngay" value="@Ngay(Model.Ngay)" />
+        <div class="field"><label for="tienDauCa">Tiền lẻ để sẵn đầu ca (đồng)</label><input id="tienDauCa" name="tienDauCa" type="number" min="0" step="1000" value="0" class="input" /></div>
+        <div class="field"><label for="tienThucDem">Tiền mặt thực đếm trong két (đồng)</label><input id="tienThucDem" name="tienMatThucDem" type="number" min="0" step="1000" required class="input" /></div>
+        <div class="ket-qua-kiem-dem full" id="ketQuaKiemDem" role="status" aria-live="polite">Nhập số tiền thực đếm để so sánh.</div>
+        <div class="field full"><label for="ghiChu">Ghi chú (giải trình chênh lệch, khoản chi trong ngày...)</label><input id="ghiChu" name="ghiChu" maxlength="500" class="input" /></div>
+        <div class="actions full"><button class="btn" type="submit">Lưu kết quả đối soát</button></div>
+    </form>
+</div>
+
+@if (Model.DaLuu.Count > 0)
+{
+    <div class="panel">
+        <h2>Các lần đối soát đã lưu trong ngày</h2>
+        <div class="table-wrap"><table class="tbl">
+            <tr><th>Lúc</th><th>Người thực hiện</th><th class="num">Tiền lẻ đầu ca</th><th class="num">Hệ thống (tiền mặt thu)</th><th class="num">Thực đếm</th><th>Kết quả</th><th>Ghi chú</th></tr>
+            @foreach (var lan in Model.DaLuu)
+            {
+                <tr>
+                    <td>@lan.NgayTao.ToString("dd/MM HH:mm")</td>
+                    <td>@lan.NguoiThucHien.HoTen</td>
+                    <td class="num">@lan.TienDauCa.Tien()</td>
+                    <td class="num">@lan.TienMatHeThong.Tien()</td>
+                    <td class="num">@lan.TienMatThucDem.Tien()</td>
+                    <td><span class="badge @LopChenh(lan.ChenhLech)">@Chenh(lan.ChenhLech)</span></td>
+                    <td>@lan.GhiChu</td>
+                </tr>
+            }
+        </table></div>
+    </div>
+}
+
+<div class="panel">
+    <h2>Doanh thu 7 ngày gần nhất</h2>
+    <div class="table-wrap"><table class="tbl">
+        <tr><th>Ngày</th><th class="num">Số đơn đã thu</th><th class="num">Tiền mặt</th><th class="num">Chuyển khoản</th><th class="num">Tổng</th><th class="no-print"></th></tr>
+        @foreach (var dong in Model.BayNgay)
+        {
+            <tr style="@(dong.Ngay == Model.Ngay ? "background:#FFF6DA" : "")">
+                <td><strong>@dong.Ngay.ToString("dd/MM/yyyy")</strong></td>
+                <td class="num">@dong.SoDon</td>
+                <td class="num">@dong.TienMat.Tien()</td>
+                <td class="num">@dong.ChuyenKhoan.Tien()</td>
+                <td class="num"><strong>@dong.Tong.Tien()</strong></td>
+                <td class="no-print"><a class="btn btn-sm btn-ghost" asp-action="DoiSoat" asp-route-ngay="@Ngay(dong.Ngay)">Xem</a></td>
+            </tr>
+        }
+    </table></div>
+</div>
+
+<div class="panel">
+    <h2>Chi tiết các khoản đã thu trong ngày</h2>
+    <p class="muted no-print" style="font-size:.9rem">Tick vào từng khoản khi đã đối chiếu với tiền trong két hoặc sao kê ngân hàng. Khoản chưa tick là khoản cần kiểm tra lại.</p>
+    @if (Model.DanhSachThu.Count == 0) { <p class="muted">Chưa có khoản thu nào trong ngày này.</p> }
+    else
+    {
+        <div class="table-wrap"><table class="tbl" id="bangKhoanThu">
+            <tr><th class="no-print">Đã đối chiếu</th><th>Giờ thu</th><th>Mã đơn</th><th>Nơi phục vụ</th><th>Hình thức</th><th class="num">Số tiền</th><th>Người thu</th></tr>
+            @foreach (var dong in Model.DanhSachThu)
+            {
+                <tr>
+                    <td class="no-print"><input type="checkbox" class="tick" data-tien="@((long)dong.SoTien)" data-pt="@dong.MaPhuongThuc" aria-label="Đã đối chiếu đơn @dong.MaTheoDoi" /></td>
+                    <td>@dong.NgayThanhToan.ToString("HH:mm")</td>
+                    <td><strong>@dong.MaTheoDoi</strong></td>
+                    <td>@dong.NoiPhucVu</td>
+                    <td><span class="badge @(dong.MaPhuongThuc == HangSoPhuongThuc.TienMat ? "ok" : "")">@HangSoPhuongThuc.Ten(dong.MaPhuongThuc)</span></td>
+                    <td class="num">@dong.SoTien.Tien()</td>
+                    <td>@(dong.NguoiThu ?? "-")</td>
+                </tr>
+            }
+        </table></div>
+        <p class="no-print" id="tongTick" style="margin:.8rem 0 0;font-weight:600">Đã đối chiếu: 0 khoản (tiền mặt 0đ, chuyển khoản 0đ)</p>
+    }
+</div>
+
+<div class="panel">
+    <h2>Đơn tạo trong ngày nhưng chưa thu tiền</h2>
+    @if (Model.DanhSachChuaThu.Count == 0) { <p class="muted">Không có đơn nào chưa thu tiền. Tốt!</p> }
+    else
+    {
+        <p class="muted" style="font-size:.9rem">Đơn ở trạng thái "Hoàn thành" mà chưa thu tiền là nguy cơ thất thoát, hãy hỏi lại khách hoặc kiểm tra xem đã quên bấm thu tiền chưa.</p>
+        <div class="table-wrap"><table class="tbl">
+            <tr><th>Giờ đặt</th><th>Mã đơn</th><th>Nơi phục vụ</th><th>Trạng thái</th><th class="num">Số tiền</th><th class="no-print">Thu tiền ngay</th></tr>
+            @foreach (var dong in Model.DanhSachChuaThu)
+            {
+                <tr>
+                    <td>@dong.NgayTao.ToString("HH:mm")</td>
+                    <td><strong>@dong.MaTheoDoi</strong></td>
+                    <td>@dong.NoiPhucVu</td>
+                    <td><span class="badge @DinhDang.LopTrangThai(dong.MaTrangThai)">@HangSoTrangThai.Ten(dong.MaTrangThai)</span></td>
+                    <td class="num">@dong.SoTien.Tien()</td>
+                    <td class="no-print">
+                        <form asp-action="ThuTien" method="post" class="inline-form">
+                            <input type="hidden" name="ma" value="@dong.MaDonHang" /><input type="hidden" name="quayLai" value="@quayLai" />
+                            <button class="btn btn-sm btn-ink" type="submit" name="maPhuongThuc" value="@HangSoPhuongThuc.TienMat">Tiền mặt</button>
+                            <button class="btn btn-sm btn-ink" type="submit" name="maPhuongThuc" value="@HangSoPhuongThuc.ChuyenKhoan" data-qr-don="@dong.MaDonHang">Chuyển khoản (QR)</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </table></div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/doisoat.js" asp-append-version="true"></script>
+}

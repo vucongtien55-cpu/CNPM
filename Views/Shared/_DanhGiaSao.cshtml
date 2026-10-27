@@ -1,0 +1,14 @@
+@model ThongKeDanhGia
+@{
+    var diem = Model.DiemTrungBinh.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+}
+@if (Model.SoLuot > 0)
+{
+    <span class="sao" style="--diem:@diem" role="img" aria-label="@diem trên 5 sao"></span>
+    <b class="dg-diem">@diem</b>
+    <span class="dg-so">(@Model.SoLuot đánh giá)</span>
+}
+else
+{
+    <span class="dg-so">Chưa có đánh giá</span>
+}

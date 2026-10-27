@@ -1,0 +1,28 @@
+@model List<DonHang>
+@{
+    ViewData["Title"] = "Đơn của tôi";
+}
+
+<div class="container" style="max-width:640px;padding-top:1.5rem;padding-bottom:3rem">
+    <h1>Đơn của tôi</h1>
+    <p class="muted">Đây là những đơn bạn từng đặt trên máy này.</p>
+
+    @if (Model.Count == 0)
+    {
+        <p class="muted">Bạn chưa đặt đơn nào trên máy này, hoặc trình duyệt đã xóa lịch sử.</p>
+        <a class="btn" asp-controller="ThucDon" asp-action="Index">Đi tới thực đơn</a>
+    }
+    else
+    {
+        foreach (var don in Model)
+        {
+            <a class="dct-the" asp-action="TheoDoi" asp-route-ma="@don.MaTheoDoi">
+                <div class="dct-top">
+                    <span class="dct-ma">@don.MaTheoDoi</span>
+                    <span class="badge @DinhDang.LopTrangThai(don.MaTrangThai)">@HangSoTrangThai.Ten(don.MaTrangThai)</span>
+                </div>
+                <p class="muted" style="margin:.3rem 0 0">@don.NoiPhucVu - @don.NgayTao.ToString("dd/MM HH:mm") - @don.TongTien.Tien()</p>
+            </a>
+        }
+    }
+</div>

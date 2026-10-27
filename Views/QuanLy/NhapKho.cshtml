@@ -1,0 +1,55 @@
+@model FormNhapKhoVM
+@{
+    ViewData["Title"] = "Lập phiếu nhập kho";
+    Layout = "_StaffLayout";
+    var danhSachNguyenLieu = (List<NguyenLieu>)ViewBag.DanhSachNguyenLieu;
+    var danhSachNhaCungCap = (List<NhaCungCap>)ViewBag.DanhSachNhaCungCap;
+}
+<div class="panel">
+    <form asp-action="NhapKho" method="post">
+        <div class="form-grid cols" style="max-width:none">
+            <div class="field"><label for="tenNhaCungCap">Nhà cung cấp</label>
+                <input id="tenNhaCungCap" name="tenNhaCungCap" class="input" list="dsNhaCungCap" placeholder="Chọn hoặc gõ tên mới" />
+                <datalist id="dsNhaCungCap">@foreach (var ncc in danhSachNhaCungCap) { <option value="@ncc.TenNhaCungCap"></option> }</datalist></div>
+            <div class="field"><label for="ghiChu">Ghi chú</label><input id="ghiChu" name="ghiChu" class="input" maxlength="300" /></div>
+        </div>
+
+        <div class="table-wrap" style="margin-top:1rem"><table class="tbl" id="bangNhap">
+            <thead><tr><th>Nguyên liệu</th><th>Số lượng nhập (theo đơn vị nhập)</th><th>Đơn giá nhập / đơn vị nhập (đồng)</th><th></th></tr></thead>
+            <tbody>
+                @for (var i = 0; i < 3; i++)
+                {
+                    <tr>
+                        <td><select class="input" name="danhSachMaNguyenLieu" aria-label="Nguyên liệu">
+                            @foreach (var nl in danhSachNguyenLieu) { <option value="@nl.MaNguyenLieu">@nl.TenNguyenLieu (@(nl.DonViNhap ?? nl.DonViTinh))</option> }
+                        </select></td>
+                        <td><input class="input" type="number" name="danhSachSoLuong" min="0" step="0.001" value="0" aria-label="Số lượng" /></td>
+                        <td><input class="input" type="number" name="danhSachDonGia" min="0" step="100" value="0" aria-label="Đơn giá" /></td>
+                        <td><button type="button" class="btn btn-sm btn-ghost" data-xoa-dong>Xóa dòng</button></td>
+                    </tr>
+                }
+            </tbody>
+        </table></div>
+        <p class="muted" style="font-size:.85rem">Số lượng tính theo <strong>đơn vị nhập</strong> của nguyên liệu (vd: chai, túi), không phải ml/g. Dòng có số lượng 0 sẽ được bỏ qua.</p>
+        <div class="actions">
+            <button type="button" class="btn btn-ghost" id="nutThemDong">Thêm dòng</button>
+            <button type="submit" class="btn">Lưu phiếu và cộng kho tổng</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const thanBang = document.querySelector('#bangNhap tbody');
+            document.getElementById('nutThemDong').addEventListener('click', () => {
+                const dongMoi = thanBang.rows[0].cloneNode(true);
+                dongMoi.querySelectorAll('input').forEach((o) => { o.value = 0; });
+                thanBang.appendChild(dongMoi);
+            });
+            thanBang.addEventListener('click', (e) => {
+                if (e.target.matches('[data-xoa-dong]') && thanBang.rows.length > 1) e.target.closest('tr').remove();
+            });
+        })();
+    </script>
+}

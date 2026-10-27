@@ -1,0 +1,18 @@
+@{
+    var dangNgoiBan = !string.IsNullOrEmpty(Context.Session.GetString("TenBan"));
+}
+@if (dangNgoiBan)
+{
+    <div class="nut-goi-noi" id="nutGoiNoi">
+        <button type="button" class="btn btn-sm" id="nutMoGoiNhanVien">🙋 Cần hỗ trợ?</button>
+    </div>
+    <dialog class="opt" id="hopGoiNhanVien" aria-labelledby="gnvTieuDe">
+        <div style="display:grid;gap:.8rem;padding:1.3rem">
+            <h3 id="gnvTieuDe" style="margin:0">Bạn cần gì?</h3>
+            <button type="button" class="btn" data-loai="GOI_NHAN_VIEN">🙋 Gọi nhân viên</button>
+            <button type="button" class="btn btn-ink" data-loai="XIN_THANH_TOAN">💳 Xin thanh toán</button>
+            <p class="cart-msg" id="gnvThongBao" role="alert"></p>
+            <button type="button" class="btn btn-ghost btn-sm" id="gnvDong">Đóng</button>
+        </div>
+    </dialog>
+}

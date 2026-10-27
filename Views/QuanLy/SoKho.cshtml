@@ -1,0 +1,26 @@
+@model List<BienDongKho>
+@{
+    ViewData["Title"] = "Sổ kho (kho tổng, 200 biến động gần nhất)";
+    Layout = "_StaffLayout";
+}
+<div class="actions no-print" style="margin-bottom:1rem">
+    <a class="btn btn-ghost" asp-action="Kho">← Về tồn kho</a>
+    <a class="btn btn-ghost" asp-action="NguyenLieuHangNgay">📅 Xem nguyên liệu hàng ngày (trừ theo đơn) →</a>
+</div>
+<p class="muted">Sổ kho chỉ ghi lại các lần <strong>nhập kho</strong> (từ nhà cung cấp), <strong>xuất kho</strong> (chuyển sang kho dùng hàng ngày) và
+    <strong>điều chỉnh kho tổng</strong>. Việc trừ nguyên liệu theo từng món mỗi ngày xem ở trang "Nguyên liệu hàng ngày".</p>
+<div class="panel table-wrap">
+    <table class="tbl">
+        <tr><th>Thời gian</th><th>Nguyên liệu</th><th class="num">Thay đổi</th><th>Loại</th><th>Ghi chú</th></tr>
+        @foreach (var bd in Model)
+        {
+            <tr>
+                <td>@bd.NgayTao.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@bd.NguyenLieu.TenNguyenLieu</td>
+                <td class="num"><span class="badge @(bd.SoLuongThayDoi >= 0 ? "ok" : "red")">@(bd.SoLuongThayDoi >= 0 ? "+" : "")@bd.SoLuongThayDoi.SoThapPhan() @(bd.NguyenLieu.DonViNhap ?? bd.NguyenLieu.DonViTinh)</span></td>
+                <td>@HangSoBienDong.Ten(bd.LoaiBienDong)</td>
+                <td>@bd.GhiChu @(bd.MaPhieuXuat != null ? "(phiếu xuất #" + bd.MaPhieuXuat + ")" : "")</td>
+            </tr>
+        }
+    </table>
+</div>

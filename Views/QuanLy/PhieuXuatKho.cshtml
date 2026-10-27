@@ -1,0 +1,72 @@
+@model List<PhieuXuatKho>
+@{
+    ViewData["Title"] = "Phiếu xuất kho";
+    Layout = "_StaffLayout";
+}
+<div class="actions no-print" style="margin-bottom:1rem">
+    <a class="btn btn-ghost" asp-action="Kho">← Về tồn kho</a>
+</div>
+
+@if (TempData["ThanhCong"] != null)
+{
+    <div class="panel"><p class="ok" style="margin:0">@TempData["ThanhCong"]</p></div>
+}
+@if (TempData["CanhBao"] != null)
+{
+    <div class="panel"><p class="canh-bao-dong" style="margin:0">@TempData["CanhBao"]</p></div>
+}
+
+<div class="panel table-wrap">
+    @if (Model.Count == 0)
+    {
+        <p class="muted">Chưa có phiếu xuất kho nào.</p>
+    }
+    else
+    {
+        <table class="tbl">
+            <tr><th>Mã</th><th>Người tạo</th><th>Ngày tạo</th><th>Nội dung</th><th>Trạng thái</th><th>Người duyệt</th><th></th></tr>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>#@p.MaPhieuXuat</td>
+                    <td>@(p.NguoiTao?.HoTen ?? "—")</td>
+                    <td>@p.NgayTao.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>
+                        <ul style="margin:0;padding-left:1.1rem">
+                            @foreach (var ct in p.DanhSachChiTiet)
+                            {
+                                <li>@ct.NguyenLieu.TenNguyenLieu: @ct.SoLuong.SoThapPhan() @(ct.NguyenLieu.DonViNhap ?? ct.NguyenLieu.DonViTinh)
+                                    (→ +@((ct.SoLuong * ct.NguyenLieu.QuyDoiSoLuong).SoThapPhan()) @ct.NguyenLieu.DonViTinh)</li>
+                            }
+                        </ul>
+                        @if (!string.IsNullOrWhiteSpace(p.GhiChu)) { <div class="muted" style="font-size:.85rem">Ghi chú: @p.GhiChu</div> }
+                    </td>
+                    <td>
+                        <span class="badge @(p.TrangThai == HangSoTrangThaiXuatKho.ChoDuyet ? "warn" : p.TrangThai == HangSoTrangThaiXuatKho.DaXuat ? "ok" : "red")">
+                            @HangSoTrangThaiXuatKho.Ten(p.TrangThai)
+                        </span>
+                        @if (p.TrangThai == HangSoTrangThaiXuatKho.TuChoi && !string.IsNullOrWhiteSpace(p.LyDoTuChoi))
+                        {
+                            <div class="muted" style="font-size:.8rem">Lý do: @p.LyDoTuChoi</div>
+                        }
+                    </td>
+                    <td>@(p.NguoiDuyet?.HoTen ?? "—")</td>
+                    <td>
+                        @if (p.TrangThai == HangSoTrangThaiXuatKho.ChoDuyet)
+                        {
+                            <form asp-action="DuyetPhieuXuatKho" method="post" class="inline-form">
+                                <input type="hidden" name="ma" value="@p.MaPhieuXuat" />
+                                <button class="btn btn-sm" type="submit">✔ Duyệt & xuất kho</button>
+                            </form>
+                            <form asp-action="TuChoiPhieuXuatKho" method="post" class="inline-form" style="margin-top:.3rem">
+                                <input type="hidden" name="ma" value="@p.MaPhieuXuat" />
+                                <input class="input" name="lyDo" placeholder="Lý do từ chối" style="width:140px" aria-label="Lý do từ chối" />
+                                <button class="btn btn-sm btn-ghost" type="submit" style="color:var(--red)">Từ chối</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </table>
+    }
+</div>

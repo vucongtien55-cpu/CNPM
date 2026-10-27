@@ -1,0 +1,125 @@
+@model CanhBaoKhoVM
+@{
+    ViewData["Title"] = "Cảnh báo kho";
+    Layout = "_StaffLayout";
+}
+
+@if (TempData["ThanhCong"] != null)
+{
+    <div class="panel"><p class="ok" style="margin:0">@TempData["ThanhCong"]</p></div>
+}
+@if (TempData["CanhBao"] != null)
+{
+    <div class="panel"><p class="canh-bao-dong" style="margin:0">@TempData["CanhBao"]</p></div>
+}
+
+<div class="panel">
+    <h2 style="margin-top:0">🧋 Sắp hết nguyên liệu dùng hàng ngày</h2>
+    @if (Model.SapHetKhoDung.Count == 0)
+    {
+        <p class="muted">Tất cả nguyên liệu còn đủ dùng.</p>
+    }
+    else
+    {
+        <div class="table-wrap"><table class="tbl">
+            <tr><th>Nguyên liệu</th><th class="num">Còn</th><th class="num">Còn làm được</th></tr>
+            @foreach (var nl in Model.SapHetKhoDung)
+            {
+                <tr>
+                    <td>@nl.TenNguyenLieu</td>
+                    <td class="num"><span class="badge red">@nl.SoLuongTon.SoThapPhan() @nl.DonViTinh</span></td>
+                    <td class="num">~@nl.SoCocConLai?.ToString("0") cốc (báo khi ≤ @nl.SoCocCanhBao)</td>
+                </tr>
+            }
+        </table></div>
+    }
+</div>
+
+<div class="panel">
+    <h2 style="margin-top:0">📦 Sắp hết kho tổng (cần đặt hàng nhà cung cấp)</h2>
+    @if (Model.SapHetKhoTong.Count == 0)
+    {
+        <p class="muted">Kho tổng vẫn còn trên mức tối thiểu.</p>
+    }
+    else
+    {
+        <div class="table-wrap"><table class="tbl">
+            <tr><th>Nguyên liệu</th><th class="num">Còn</th><th class="num">Tối thiểu</th></tr>
+            @foreach (var nl in Model.SapHetKhoTong)
+            {
+                <tr>
+                    <td>@nl.TenNguyenLieu</td>
+                    <td class="num"><span class="badge red">@nl.SoLuongTonKhoTong.SoThapPhan() @(nl.DonViNhap ?? nl.DonViTinh)</span></td>
+                    <td class="num">@nl.MucToiThieuKhoTong.SoThapPhan() @(nl.DonViNhap ?? nl.DonViTinh)</td>
+                </tr>
+            }
+        </table></div>
+    }
+</div>
+
+<div class="panel">
+    <h2 style="margin-top:0">Lập phiếu xuất kho (lấy từ kho tổng sang kho dùng hàng ngày)</h2>
+    <p class="muted" style="margin-top:0">Chọn nguyên liệu và số lượng theo <strong>đơn vị nhập</strong> (chai/túi...). Phiếu sẽ được gửi cho quản lý duyệt & thực hiện xuất kho.</p>
+    <form asp-controller="ThuNgan" asp-action="TaoPhieuXuatKho" method="post">
+        <div class="table-wrap"><table class="tbl" id="bangXuat">
+            <thead><tr><th>Nguyên liệu</th><th>Số lượng (đơn vị nhập)</th><th></th></tr></thead>
+            <tbody>
+                @for (var i = 0; i < 3; i++)
+                {
+                    <tr>
+                        <td><select class="input" name="DanhSachMaNguyenLieu" aria-label="Nguyên liệu">
+                            @foreach (var nl in Model.TatCaNguyenLieu) { <option value="@nl.MaNguyenLieu">@nl.TenNguyenLieu (@(nl.DonViNhap ?? nl.DonViTinh))</option> }
+                        </select></td>
+                        <td><input class="input" type="number" name="DanhSachSoLuong" min="0" step="0.001" value="0" aria-label="Số lượng" /></td>
+                        <td><button type="button" class="btn btn-sm btn-ghost" data-xoa-dong>Xóa dòng</button></td>
+                    </tr>
+                }
+            </tbody>
+        </table></div>
+        <div class="field" style="margin-top:.6rem"><label for="GhiChu">Ghi chú</label><input id="GhiChu" name="GhiChu" class="input" maxlength="300" /></div>
+        <p class="muted" style="font-size:.85rem">Dòng có số lượng 0 sẽ được bỏ qua.</p>
+        <div class="actions">
+            <button type="button" class="btn btn-ghost" id="nutThemDongXuat">Thêm dòng</button>
+            <button type="submit" class="btn">Gửi phiếu xuất kho cho quản lý</button>
+        </div>
+    </form>
+</div>
+
+<div class="panel table-wrap">
+    <h2 style="margin-top:0">Phiếu xuất kho đang chờ duyệt</h2>
+    @if (Model.PhieuDangChoDuyet.Count == 0)
+    {
+        <p class="muted">Không có phiếu nào đang chờ.</p>
+    }
+    else
+    {
+        <table class="tbl">
+            <tr><th>Mã</th><th>Người tạo</th><th>Ngày tạo</th><th>Nội dung</th></tr>
+            @foreach (var p in Model.PhieuDangChoDuyet)
+            {
+                <tr>
+                    <td>#@p.MaPhieuXuat</td>
+                    <td>@(p.NguoiTao?.HoTen ?? "—")</td>
+                    <td>@p.NgayTao.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@string.Join(", ", p.DanhSachChiTiet.Select(ct => $"{ct.NguyenLieu.TenNguyenLieu}: {ct.SoLuong.SoThapPhan()} {ct.NguyenLieu.DonViNhap ?? ct.NguyenLieu.DonViTinh}"))</td>
+                </tr>
+            }
+        </table>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const thanBang = document.querySelector('#bangXuat tbody');
+            document.getElementById('nutThemDongXuat').addEventListener('click', () => {
+                const dongMoi = thanBang.rows[0].cloneNode(true);
+                dongMoi.querySelectorAll('input').forEach((o) => { o.value = 0; });
+                thanBang.appendChild(dongMoi);
+            });
+            thanBang.addEventListener('click', (e) => {
+                if (e.target.matches('[data-xoa-dong]') && thanBang.rows.length > 1) e.target.closest('tr').remove();
+            });
+        })();
+    </script>
+}

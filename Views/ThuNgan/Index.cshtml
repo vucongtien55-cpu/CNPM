@@ -1,0 +1,47 @@
+@{
+    ViewData["Title"] = "Bảng đơn hàng";
+    Layout = "_StaffLayout";
+}
+
+<div class="actions no-print" style="margin-bottom:1rem">
+    <a class="btn btn-sm" asp-action="TaoDon">➕ Tạo đơn tại quầy</a>
+    <span id="conn" class="conn off">Đang kết nối...</span>
+    <button class="btn btn-sm btn-ghost" id="nutAmThanh" type="button" title="Kêu chuông và đọc to bằng giọng nói khi có đơn mới hoặc khách gọi nhân viên">🔔 Bật âm báo đơn mới</button>
+    <button class="btn btn-sm btn-ghost" id="nutTaiLai" type="button">Tải lại</button>
+    <a class="btn btn-sm btn-ghost" asp-action="LichSu">🕘 Lịch sử đơn</a>
+    <a class="btn btn-sm btn-ghost" asp-action="DoiSoat">💰 Đối soát cuối ngày</a>
+</div>
+
+<section class="khu-ban" id="khuBan" aria-labelledby="tieuDeBan">
+    <div class="khu-ban-dau">
+        <h2 id="tieuDeBan">Bàn đang có khách <span class="n" id="demBan">0</span></h2>
+        <div class="chu-thich" aria-label="Chú thích màu">
+            <span><i class="cham b-do"></i>Có đơn chờ xác nhận</span>
+            <span><i class="cham b-xanh"></i>Đang làm</span>
+            <span><i class="cham b-luc"></i>Sẵn sàng</span>
+            <span><i class="cham b-vang"></i>Chờ thanh toán</span>
+        </div>
+    </div>
+    <div class="thanh-loc" id="thanhLoc" hidden>
+        <span id="chuLoc"></span>
+        <button type="button" class="btn btn-sm btn-ghost" id="nutBoLoc">Bỏ lọc, xem tất cả</button>
+    </div>
+    <div class="luoi-ban" id="luoiBan"></div>
+</section>
+
+<div class="board" id="bangDon">
+    <section class="col c1" aria-label="Chờ xác nhận"><div class="col-head">Chờ xác nhận <span class="n" id="dem1">0</span></div><div id="cot1"></div></section>
+    <section class="col c2" aria-label="Đang làm"><div class="col-head">Đang làm <span class="n" id="dem2">0</span></div><div id="cot2"></div></section>
+    <section class="col c3" aria-label="Sẵn sàng"><div class="col-head">Sẵn sàng <span class="n" id="dem3">0</span></div><div id="cot3"></div></section>
+    <section class="col c4" aria-label="Vừa xong">
+        <div class="col-head">Vừa xong <span class="n" id="dem4">0</span></div>
+        <p class="muted" style="font-size:.8rem;margin:-.3rem .4rem .7rem">Chỉ hiện đơn vừa xong trong vài phút gần đây. Các đơn trước đó xem ở <a asp-action="LichSu">Lịch sử đơn</a>.</p>
+        <div id="cot4"></div>
+    </section>
+</div>
+<div class="toast-wrap" id="toasts" role="status" aria-live="polite"></div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script src="~/js/thungan.js" asp-append-version="true"></script>
+}

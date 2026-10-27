@@ -1,0 +1,137 @@
+@model DonHang
+@inject MixueDatMon.DichVu.DichVuVietQr VietQr
+@{
+    ViewData["Title"] = "Theo dõi đơn " + Model.MaTheoDoi;
+}
+
+<div class="container">
+    <div class="track" id="track" data-ma="@Model.MaTheoDoi" data-trang-thai="@Model.MaTrangThai" data-da-thanh-toan="@(Model.NgayThanhToan != null ? "1" : "0")" data-mang-di="@(Model.MaBan == null ? "1" : "0")">
+        <span class="track-code">@Model.MaTheoDoi</span>
+        <h1 id="headline">Đang tải trạng thái...</h1>
+        <p class="muted">@(Model.BanAn != null ? "Tại " + Model.BanAn.TenBan : "Đơn mang đi"), gửi lúc @Model.NgayTao.ToString("HH:mm")</p>
+
+        <div class="stepper" id="stepper" aria-hidden="true"></div>
+        <div class="status-card" id="statusCard" role="status" aria-live="polite"></div>
+
+        <div class="receipt">
+            @foreach (var chiTiet in Model.DanhSachChiTiet)
+            {
+                var tuyChon = new List<string>();
+                if (chiTiet.KichCo != null) tuyChon.Add("Size " + chiTiet.KichCo.TenKichCo);
+                if (chiTiet.MucDa != null) tuyChon.Add(chiTiet.MucDa.TenMuc);
+                if (chiTiet.MucDuong != null) tuyChon.Add(chiTiet.MucDuong.TenMuc);
+                tuyChon.AddRange(chiTiet.DanhSachTopping.Select(t => "+ " + t.Topping.TenTopping));
+                <div class="row">
+                    <div>
+                        <strong>@chiTiet.SoLuong x @chiTiet.MonAn.TenMon</strong>
+                        @if (tuyChon.Count > 0) { <div class="sub">@string.Join(", ", tuyChon)</div> }
+                        @if (!string.IsNullOrEmpty(chiTiet.GhiChu)) { <div class="sub">Ghi chú: @chiTiet.GhiChu</div> }
+                    </div>
+                    <div>@chiTiet.ThanhTien.Tien()</div>
+                </div>
+            }
+            <div class="row"><span>Tổng cộng</span><span class="total">@Model.TongTien.Tien()</span></div>
+            <div class="row"><span class="muted">Thanh toán</span><span id="payState" class="badge">Thanh toán tại quầy</span></div>
+        </div>
+
+        @if (VietQr.DaCauHinh && Model.NgayThanhToan == null && Model.MaTrangThai != HangSoTrangThai.DaHuy && Model.TongTien > 0)
+        {
+            <section class="khu-qr" id="khuQr" aria-labelledby="tieuDeQr">
+                <h2 id="tieuDeQr">@(Model.BanAn == null ? "Thanh toán chuyển khoản" : "Muốn trả bằng chuyển khoản?")</h2>
+                <p class="muted">@(Model.BanAn == null
+                    ? "Đơn mang đi cần thanh toán trước. Quét mã bằng app ngân hàng, số tiền và nội dung đã được điền sẵn. Chuyển xong, bạn báo thu ngân để quán xác nhận và bắt đầu pha chế. Bạn cũng có thể trả tiền mặt tại quầy."
+                    : "Bạn cũng có thể trả tiền mặt tại quầy. Nếu chuyển khoản, quét mã bên dưới rồi báo thu ngân.")</p>
+                <div class="khu-qr-noi-dung">
+                    <img src="@Url.Action("AnhQr", "DonHang", new { ma = Model.MaTheoDoi })" alt="Mã VietQR thanh toán đơn @Model.MaTheoDoi" width="240" height="240" />
+                    <dl class="qr-thong-tin">
+                        <dt>Số tiền</dt><dd><strong>@Model.TongTien.Tien()</strong></dd>
+                        <dt>Ngân hàng</dt><dd>@VietQr.TenNganHang</dd>
+                        <dt>Số tài khoản</dt><dd><span id="khuQrSoTk">@VietQr.SoTaiKhoan</span> <button type="button" class="btn btn-sm btn-ghost" data-chep="khuQrSoTk">Sao chép</button></dd>
+                        <dt>Chủ tài khoản</dt><dd>@VietQr.TenChuTaiKhoan</dd>
+                        <dt>Nội dung</dt><dd><span id="khuQrNoiDung">@VietQr.NoiDungChoDon(Model.MaTheoDoi)</span> <button type="button" class="btn btn-sm btn-ghost" data-chep="khuQrNoiDung">Sao chép</button></dd>
+                    </dl>
+                </div>
+                <p class="qr-luu-y">Hãy chuyển đúng số tiền và giữ nguyên nội dung để thu ngân đối chiếu nhanh.</p>
+            </section>
+        }
+
+        @{
+            var chuaDanhGiaMon = Model.DanhSachChiTiet.Count(c => c.DanhGia == null);
+            var chuaDanhGiaDichVu = Model.DanhGia == null;
+        }
+        <section class="review-box" id="khuDanhGia" hidden aria-labelledby="tieuDeDanhGia">
+            <h2 id="tieuDeDanhGia">Bạn thấy hôm nay thế nào?</h2>
+            <p class="muted">Đánh giá của bạn giúp quán làm tốt hơn. Món nào không muốn đánh giá, bạn cứ bỏ qua.</p>
+
+            @foreach (var chiTiet in Model.DanhSachChiTiet)
+            {
+                <div class="rv-mon @(chiTiet.DanhGia == null ? "chua" : "da")" data-ma-chi-tiet="@chiTiet.MaChiTiet">
+                    <div class="rv-ten">@chiTiet.MonAn.TenMon</div>
+                    @if (chiTiet.DanhGia != null)
+                    {
+                        <div class="rv-da">
+                            <span class="sao" style="--diem:@chiTiet.DanhGia.SoSao" role="img" aria-label="@chiTiet.DanhGia.SoSao trên 5 sao"></span>
+                            <span class="muted">Bạn đã đánh giá @chiTiet.DanhGia.SoSao sao</span>
+                            @if (!string.IsNullOrEmpty(chiTiet.DanhGia.NhanXet)) { <p class="muted" style="margin:.3rem 0 0">"@chiTiet.DanhGia.NhanXet"</p> }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="chon-sao" role="radiogroup" aria-label="Chấm sao cho @chiTiet.MonAn.TenMon">
+                            @for (var sao = 5; sao >= 1; sao--)
+                            {
+                                <input type="radio" id="s-@chiTiet.MaChiTiet-@sao" name="sao-@chiTiet.MaChiTiet" value="@sao" />
+                                <label for="s-@chiTiet.MaChiTiet-@sao" title="@sao sao"><span class="sr-only">@sao sao</span>★</label>
+                            }
+                        </div>
+                        <textarea class="input" rows="2" maxlength="500" placeholder="Nhận xét về món này (không bắt buộc)" aria-label="Nhận xét về @chiTiet.MonAn.TenMon"></textarea>
+                    }
+                </div>
+            }
+
+            <div class="rv-mon @(chuaDanhGiaDichVu ? "chua" : "da")" id="rvDichVu">
+                <div class="rv-ten">Trải nghiệm chung tại quán (đồ uống, phục vụ, không gian)</div>
+                @if (!chuaDanhGiaDichVu)
+                {
+                    <div class="rv-da">
+                        <span class="sao" style="--diem:@Model.DanhGia.SoSao" role="img" aria-label="@Model.DanhGia.SoSao trên 5 sao"></span>
+                        <span class="muted">Bạn đã đánh giá @Model.DanhGia.SoSao sao</span>
+                        @if (!string.IsNullOrEmpty(Model.DanhGia.GopY)) { <p class="muted" style="margin:.3rem 0 0">"@Model.DanhGia.GopY"</p> }
+                    </div>
+                }
+                else
+                {
+                    <div class="chon-sao" role="radiogroup" aria-label="Chấm sao cho trải nghiệm chung">
+                        @for (var sao = 5; sao >= 1; sao--)
+                        {
+                            <input type="radio" id="s-dv-@sao" name="sao-dv" value="@sao" />
+                            <label for="s-dv-@sao" title="@sao sao"><span class="sr-only">@sao sao</span>★</label>
+                        }
+                    </div>
+                    <textarea class="input" rows="3" maxlength="1000" id="gopY" placeholder="Quán cần cải thiện điều gì để bạn hài lòng hơn? (không bắt buộc)" aria-label="Góp ý cho quán"></textarea>
+                }
+            </div>
+
+            @if (chuaDanhGiaMon > 0 || chuaDanhGiaDichVu)
+            {
+                <div class="actions">
+                    <button type="button" class="btn" id="nutGuiDanhGia">Gửi đánh giá</button>
+                    <span id="thongBaoDanhGia" class="muted" role="status" aria-live="polite"></span>
+                </div>
+            }
+            else
+            {
+                <p class="rv-cam-on">Cảm ơn bạn đã đánh giá!</p>
+            }
+        </section>
+
+        <div class="actions" style="margin-top:1.2rem">
+            <a class="btn btn-ghost" asp-controller="ThucDon" asp-action="Index">Gọi thêm món</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script src="~/js/theodoi.js" asp-append-version="true"></script>
+}

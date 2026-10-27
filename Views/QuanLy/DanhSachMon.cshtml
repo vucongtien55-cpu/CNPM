@@ -1,0 +1,37 @@
+@model List<MonAn>
+@{
+    ViewData["Title"] = "Món ăn";
+    Layout = "_StaffLayout";
+}
+
+<div class="actions" style="margin-bottom:1rem"><a class="btn" asp-action="FormMon">Thêm món mới</a></div>
+<div class="panel table-wrap">
+    <table class="tbl">
+        <tr><th>Món</th><th>Nhóm</th><th class="num">Giá</th><th>Bán chạy</th><th>Trạng thái</th><th></th></tr>
+        @foreach (var mon in Model)
+        {
+            <tr>
+                <td><strong>@mon.TenMon</strong><div class="muted" style="font-size:.82rem">@mon.TenTiengAnh</div></td>
+                <td>@mon.NhomMon.TenNhomMon</td>
+                <td class="num">@mon.Gia.Tien()</td>
+                <td>
+                    <form asp-action="DoiTrangThaiMon" method="post" class="inline-form">
+                        <input type="hidden" name="ma" value="@mon.MaMonAn" /><input type="hidden" name="truong" value="banchay" />
+                        <button type="submit" class="badge @(mon.LaBanChay ? "warn" : "")" style="border:0;cursor:pointer">@(mon.LaBanChay ? "Đang gắn nhãn" : "Không")</button>
+                    </form>
+                </td>
+                <td>
+                    <form asp-action="DoiTrangThaiMon" method="post" class="inline-form">
+                        <input type="hidden" name="ma" value="@mon.MaMonAn" /><input type="hidden" name="truong" value="dangban" />
+                        <button type="submit" class="badge @(mon.DangBan ? "ok" : "red")" style="border:0;cursor:pointer">@(mon.DangBan ? "Đang bán" : "Tạm hết")</button>
+                    </form>
+                </td>
+                <td class="actions">
+                    <a class="btn btn-sm btn-ghost" asp-action="FormMon" asp-route-ma="@mon.MaMonAn">Sửa</a>
+                    <a class="btn btn-sm btn-ghost" asp-action="KichCoMon" asp-route-ma="@mon.MaMonAn">Size & giá</a>
+                    <a class="btn btn-sm btn-ghost" asp-action="CongThuc" asp-route-ma="@mon.MaMonAn">Công thức</a>
+                </td>
+            </tr>
+        }
+    </table>
+</div>

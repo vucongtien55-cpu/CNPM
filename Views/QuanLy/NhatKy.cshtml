@@ -1,0 +1,42 @@
+@model NhatKyVM
+@{
+    ViewData["Title"] = "Nhật ký thao tác";
+    Layout = "_StaffLayout";
+}
+
+<div class="panel no-print">
+    <form method="get" asp-action="NhatKy" class="inline-form">
+        <label>Từ ngày <input class="input" type="date" name="tuNgay" value="@Model.TuNgay?.ToString("yyyy-MM-dd")" /></label>
+        <label>Đến ngày <input class="input" type="date" name="denNgay" value="@Model.DenNgay?.ToString("yyyy-MM-dd")" /></label>
+        <label>Hành động
+            <select class="input" name="hanhDong">
+                <option value="">Tất cả</option>
+                @foreach (var ma in new[] { HangSoNhatKy.HuyDon, HangSoNhatKy.HoanTien, HangSoNhatKy.TuHuyDon, HangSoNhatKy.ChuyenBan, HangSoNhatKy.TachDon,
+                    HangSoNhatKy.DieuChinhKho, HangSoNhatKy.NhapKho, HangSoNhatKy.TaoTaiKhoan, HangSoNhatKy.DatLaiMatKhau, HangSoNhatKy.KhoaMoTaiKhoan,
+                    HangSoNhatKy.DoiMaQr, HangSoNhatKy.SuaCaiDat })
+                {
+                    <option value="@ma" selected="@(Model.HanhDong == ma)">@HangSoNhatKy.Ten(ma)</option>
+                }
+            </select>
+        </label>
+        <button class="btn btn-sm" type="submit">Lọc</button>
+        <a class="btn btn-sm btn-ghost" asp-action="NhatKy">Bỏ lọc</a>
+    </form>
+</div>
+
+<div class="panel table-wrap">
+    @if (Model.DaCatBot) { <p class="err">Chỉ hiển thị 300 dòng mới nhất. Hãy thu hẹp khoảng ngày hoặc thêm bộ lọc.</p> }
+    <table class="tbl">
+        <tr><th>Thời gian</th><th>Người thực hiện</th><th>Hành động</th><th>Mô tả</th></tr>
+        @foreach (var dong in Model.DanhSachDong)
+        {
+            <tr>
+                <td>@dong.NgayTao.ToString("dd/MM/yyyy HH:mm")</td>
+                <td class="nk-nguoi">@(dong.NguoiThucHien?.HoTen ?? "Hệ thống tự động")</td>
+                <td><span class="badge">@HangSoNhatKy.Ten(dong.HanhDong)</span></td>
+                <td class="nk-mo-ta">@dong.MoTa @(dong.MaDonHang != null ? $"(đơn #{dong.MaDonHang})" : "")</td>
+            </tr>
+        }
+    </table>
+    @if (Model.DanhSachDong.Count == 0) { <p class="muted" style="padding:1rem">Chưa có nhật ký nào khớp bộ lọc.</p> }
+</div>

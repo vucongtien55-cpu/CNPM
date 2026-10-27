@@ -1,0 +1,46 @@
+@model FormMaGiamGiaVM
+@{
+    ViewData["Title"] = Model.MaMaGiamGia == 0 ? "Tạo mã giảm giá" : "Sửa mã giảm giá";
+    Layout = "_StaffLayout";
+}
+<div class="panel">
+    <form asp-action="FormMaGiamGia" method="post" class="form-grid cols">
+        <input type="hidden" asp-for="MaMaGiamGia" />
+        <div asp-validation-summary="ModelOnly" class="err full"></div>
+
+        <div class="field"><label asp-for="MaCode">Mã code (khách nhập đúng chữ này)</label>
+            <input asp-for="MaCode" class="input" style="text-transform:uppercase" placeholder="VD: MIXUE10" />
+            <span asp-validation-for="MaCode" class="err"></span></div>
+
+        <div class="field"><label asp-for="LoaiGiam">Loại giảm</label>
+            <select asp-for="LoaiGiam" class="input">
+                <option value="SO_TIEN">Giảm số tiền cố định</option>
+                <option value="PHAN_TRAM">Giảm theo phần trăm</option>
+            </select></div>
+
+        <div class="field full"><label asp-for="MoTa">Mô tả (hiển thị nội bộ)</label><input asp-for="MoTa" class="input" maxlength="200" /></div>
+
+        <div class="field"><label asp-for="GiaTriGiam">Giá trị giảm (đồng, hoặc % nếu chọn giảm theo %)</label>
+            <input asp-for="GiaTriGiam" type="number" min="1" step="1" class="input" />
+            <span asp-validation-for="GiaTriGiam" class="err"></span></div>
+
+        <div class="field"><label asp-for="GiamToiDa">Giảm tối đa (đồng, để trống nếu không giới hạn, chỉ áp dụng khi giảm theo %)</label>
+            <input asp-for="GiamToiDa" type="number" min="0" step="1000" class="input" /></div>
+
+        <div class="field"><label asp-for="DonHangToiThieu">Đơn hàng tối thiểu (đồng)</label>
+            <input asp-for="DonHangToiThieu" type="number" min="0" step="1000" class="input" /></div>
+
+        <div class="field"><label asp-for="SoLuotToiDa">Số lượt dùng tối đa (để trống = không giới hạn)</label>
+            <input asp-for="SoLuotToiDa" type="number" min="1" step="1" class="input" /></div>
+
+        <div class="field"><label asp-for="NgayBatDau">Ngày bắt đầu (để trống = dùng ngay)</label>
+            <input asp-for="NgayBatDau" type="datetime-local" class="input" /></div>
+
+        <div class="field"><label asp-for="NgayKetThuc">Ngày kết thúc (để trống = không giới hạn)</label>
+            <input asp-for="NgayKetThuc" type="datetime-local" class="input" /></div>
+
+        <label class="check"><input type="checkbox" asp-for="DangHoatDong" /> Đang kích hoạt (khách dùng được ngay)</label>
+
+        <div class="actions full"><button class="btn" type="submit">Lưu mã giảm giá</button><a class="btn btn-ghost" asp-action="MaGiamGia">Quay lại</a></div>
+    </form>
+</div>

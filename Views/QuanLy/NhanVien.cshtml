@@ -1,0 +1,44 @@
+@model List<NguoiDung>
+@{
+    ViewData["Title"] = "Nhân viên";
+    Layout = "_StaffLayout";
+}
+<div class="actions" style="margin-bottom:1rem"><a class="btn" asp-action="FormNhanVien">Thêm tài khoản</a></div>
+<div class="panel table-wrap">
+    <table class="tbl">
+        <tr><th>Tài khoản</th><th>Họ tên</th><th>Số điện thoại</th><th>Vai trò</th><th>Đăng nhập gần nhất</th><th>Trạng thái</th><th>Đặt lại mật khẩu</th></tr>
+        @foreach (var nd in Model)
+        {
+            <tr>
+                <td><strong>@nd.TenDangNhap</strong></td>
+                <td>@nd.HoTen</td>
+                <td>
+                    <form asp-action="SuaSoDienThoaiNhanVien" method="post" class="inline-form">
+                        <input type="hidden" name="ma" value="@nd.MaNguoiDung" />
+                        <input class="input" type="tel" name="soDienThoai" value="@nd.SoDienThoai" placeholder="Chưa có SĐT" aria-label="Số điện thoại của @nd.TenDangNhap" style="width:9.5rem" />
+                        <button class="btn btn-sm btn-ghost" type="submit">Lưu</button>
+                    </form>
+                    @if (string.IsNullOrEmpty(nd.SoDienThoai))
+                    {
+                        <div class="muted" style="font-size:.78rem;color:var(--red)">Chưa có SĐT sẽ không dùng được "Quên mật khẩu"</div>
+                    }
+                </td>
+                <td><span class="badge @(nd.VaiTro.TenVaiTro == HangSoVaiTro.QuanLy ? "ink" : "")">@(nd.VaiTro.TenVaiTro == HangSoVaiTro.QuanLy ? "Quản lý" : "Thu ngân")</span></td>
+                <td>@(nd.LanDangNhapCuoi?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa đăng nhập")</td>
+                <td>
+                    <form asp-action="KhoaMoNhanVien" method="post" class="inline-form">
+                        <input type="hidden" name="ma" value="@nd.MaNguoiDung" />
+                        <button type="submit" class="badge @(nd.DangHoatDong ? "ok" : "red")" style="border:0;cursor:pointer">@(nd.DangHoatDong ? "Đang hoạt động" : "Đã khóa")</button>
+                    </form>
+                </td>
+                <td>
+                    <form asp-action="DatLaiMatKhau" method="post" class="inline-form">
+                        <input type="hidden" name="ma" value="@nd.MaNguoiDung" />
+                        <input class="input" type="password" name="matKhauMoi" minlength="8" placeholder="Mật khẩu mới" autocomplete="new-password" aria-label="Mật khẩu mới cho @nd.TenDangNhap" />
+                        <button class="btn btn-sm btn-ghost" type="submit">Đặt lại</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </table>
+</div>

@@ -1,0 +1,50 @@
+@model BaoCaoLaiGopVM
+@{
+    ViewData["Title"] = "Báo cáo lãi gộp";
+    Layout = "_StaffLayout";
+}
+
+<div class="panel no-print">
+    <form method="get" asp-action="BaoCaoLaiGop" class="inline-form">
+        <label>Từ ngày <input class="input" type="date" name="tuNgay" value="@Model.TuNgay.ToString("yyyy-MM-dd")" /></label>
+        <label>Đến ngày <input class="input" type="date" name="denNgay" value="@Model.DenNgay.ToString("yyyy-MM-dd")" max="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+        <button class="btn btn-sm" type="submit">Lọc</button>
+        <a class="btn btn-sm btn-ghost" asp-action="XuatExcelLaiGop" asp-route-tuNgay="@Model.TuNgay.ToString("yyyy-MM-dd")" asp-route-denNgay="@Model.DenNgay.ToString("yyyy-MM-dd")">⬇️ Xuất Excel</a>
+        <a class="btn btn-sm btn-ghost" asp-action="BaoCaoLaiRong">💵 Xem lãi ròng theo tháng (đã trừ chi phí) →</a>
+    </form>
+</div>
+
+@if (Model.CoMonThieuGiaVon)
+{
+    <div class="panel"><p class="canh-bao-dong" style="margin:0">⚠️ Một số món chưa tính được giá vốn (chưa khai báo công thức định lượng hoặc nguyên liệu chưa từng nhập kho). Lãi gộp của các món này đang hiển thị bằng đúng doanh thu, chưa trừ giá vốn - số liệu dưới đây chỉ mang tính tham khảo cho tới khi khai báo đủ.</p></div>
+}
+
+<div class="panel cards-tong-quan" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem">
+    <div><div class="muted">Doanh thu</div><div style="font:800 1.4rem var(--font-display)">@Model.TongDoanhThu.Tien()</div></div>
+    <div><div class="muted">Giá vốn</div><div style="font:800 1.4rem var(--font-display)">@Model.TongGiaVon.Tien()</div></div>
+    <div><div class="muted">Lãi gộp</div><div style="font:800 1.4rem var(--font-display);color:var(--ok)">@Model.TongLaiGop.Tien()</div></div>
+</div>
+
+<div class="panel table-wrap">
+    @if (Model.DanhSachMon.Count == 0)
+    {
+        <p class="muted">Không có đơn nào trong khoảng ngày đã chọn.</p>
+    }
+    else
+    {
+        <table class="tbl">
+            <tr><th>Món</th><th class="num">SL bán</th><th class="num">Doanh thu</th><th class="num">Giá vốn</th><th class="num">Lãi gộp</th><th class="num">Tỷ lệ lãi gộp</th></tr>
+            @foreach (var m in Model.DanhSachMon)
+            {
+                <tr>
+                    <td>@m.TenMon @if (m.ThieuGiaVon) { <span class="badge warn" title="Chưa đủ dữ liệu giá vốn">?</span> }</td>
+                    <td class="num">@m.SoLuongBan</td>
+                    <td class="num">@m.DoanhThu.Tien()</td>
+                    <td class="num">@m.GiaVon.Tien()</td>
+                    <td class="num" style="font-weight:700">@m.LaiGop.Tien()</td>
+                    <td class="num"><span class="badge @(m.TyLeLaiGop >= 40 ? "ok" : m.TyLeLaiGop >= 15 ? "warn" : "red")">@m.TyLeLaiGop.ToString("0.0")%</span></td>
+                </tr>
+            }
+        </table>
+    }
+</div>

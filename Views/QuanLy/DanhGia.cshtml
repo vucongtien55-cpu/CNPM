@@ -1,0 +1,103 @@
+@model DanhGiaVM
+@{
+    ViewData["Title"] = "Đánh giá của khách";
+    Layout = "_StaffLayout";
+    string Diem(decimal so) => so.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+}
+
+<div class="stats">
+    <div class="stat sun"><div class="k">Điểm về quán / dịch vụ</div>
+        <div class="v">@(Model.SoDanhGiaDon == 0 ? "Chưa có" : Diem(Model.DiemDichVu) + " / 5")</div>
+        <div class="muted" style="font-size:.85rem">@Model.SoDanhGiaDon lượt đánh giá</div></div>
+    <div class="stat"><div class="k">Điểm trung bình các món</div>
+        <div class="v">@(Model.SoDanhGiaMon == 0 ? "Chưa có" : Diem(Model.DiemMon) + " / 5")</div>
+        <div class="muted" style="font-size:.85rem">@Model.SoDanhGiaMon lượt đánh giá món</div></div>
+    <div class="stat red"><div class="k">Góp ý thấp (2 sao trở xuống) chưa xem</div><div class="v">@Model.SoDanhGiaThap</div></div>
+</div>
+
+<div class="panel">
+    <form method="get" asp-action="DanhGia" class="inline-form">
+        <label>Chỉ hiện đánh giá từ
+            <select class="input" name="toiDaSao" onchange="this.form.submit()">
+                <option value="" selected="@(Model.ToiDaSao == null)">Tất cả số sao</option>
+                <option value="2" selected="@(Model.ToiDaSao == 2)">2 sao trở xuống (cần cải thiện)</option>
+                <option value="3" selected="@(Model.ToiDaSao == 3)">3 sao trở xuống</option>
+                <option value="4" selected="@(Model.ToiDaSao == 4)">4 sao trở xuống</option>
+            </select>
+        </label>
+        <noscript><button class="btn btn-sm" type="submit">Lọc</button></noscript>
+    </form>
+</div>
+
+<div class="panel">
+    <h2>Điểm theo món (món điểm thấp nhất ở trên cùng)</h2>
+    @if (Model.ThongKeMon.Count == 0) { <p class="muted">Chưa có món nào được đánh giá.</p> }
+    else
+    {
+        <div class="table-wrap"><table class="tbl">
+            <tr><th>Món</th><th>Điểm trung bình</th><th class="num">Số người đánh giá</th></tr>
+            @foreach (var dong in Model.ThongKeMon)
+            {
+                <tr>
+                    <td><strong>@dong.TenMon</strong></td>
+                    <td><span class="sao" style="--diem:@Diem(dong.DiemTrungBinh)" role="img" aria-label="@Diem(dong.DiemTrungBinh) trên 5 sao"></span> <b>@Diem(dong.DiemTrungBinh)</b></td>
+                    <td class="num">@dong.SoLuot</td>
+                </tr>
+            }
+        </table></div>
+    }
+</div>
+
+<div class="panel">
+    <h2>Góp ý về quán và dịch vụ</h2>
+    @if (Model.DanhSachGopY.Count == 0) { <p class="muted">Không có góp ý nào khớp bộ lọc.</p> }
+    else
+    {
+        <div class="table-wrap"><table class="tbl">
+            <tr><th>Thời gian</th><th>Đơn</th><th>Số sao</th><th>Góp ý</th><th>Trạng thái</th></tr>
+            @foreach (var dong in Model.DanhSachGopY)
+            {
+                <tr>
+                    <td>@dong.NgayTao.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@dong.MaTheoDoi<div class="muted" style="font-size:.82rem">@dong.NoiPhucVu</div></td>
+                    <td><span class="sao" style="--diem:@dong.SoSao" role="img" aria-label="@dong.SoSao trên 5 sao"></span></td>
+                    <td style="max-width:420px">@(string.IsNullOrEmpty(dong.GopY) ? "(Không viết góp ý)" : dong.GopY)</td>
+                    <td>
+                        <form asp-action="DoiTrangThaiGopY" method="post" class="inline-form">
+                            <input type="hidden" name="ma" value="@dong.MaDanhGiaDon" /><input type="hidden" name="toiDaSao" value="@Model.ToiDaSao" />
+                            <button type="submit" class="badge @(dong.DaXem ? "ok" : "warn")" style="border:0;cursor:pointer">@(dong.DaXem ? "Đã xem" : "Chưa xem")</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </table></div>
+    }
+</div>
+
+<div class="panel">
+    <h2>Nhận xét về từng món</h2>
+    <p class="muted" style="font-size:.9rem">Nhận xét bị ẩn sẽ không hiện cho khách và không tính vào điểm trung bình của món.</p>
+    @if (Model.DanhSachNhanXet.Count == 0) { <p class="muted">Không có nhận xét nào khớp bộ lọc.</p> }
+    else
+    {
+        <div class="table-wrap"><table class="tbl">
+            <tr><th>Thời gian</th><th>Món</th><th>Số sao</th><th>Nhận xét</th><th>Khách</th><th></th></tr>
+            @foreach (var dong in Model.DanhSachNhanXet)
+            {
+                <tr style="@(dong.DaAn ? "opacity:.55" : "")">
+                    <td>@dong.NgayTao.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td><strong>@dong.TenMon</strong><div class="muted" style="font-size:.82rem">@dong.MaTheoDoi</div></td>
+                    <td><span class="sao" style="--diem:@dong.SoSao" role="img" aria-label="@dong.SoSao trên 5 sao"></span></td>
+                    <td style="max-width:380px">@(string.IsNullOrEmpty(dong.NhanXet) ? "(Chỉ chấm sao)" : dong.NhanXet)</td>
+                    <td>@(string.IsNullOrEmpty(dong.TenKhach) ? "Khách" : dong.TenKhach)</td>
+                    <td>
+                        <form asp-action="AnHienDanhGiaMon" method="post" class="inline-form">
+                            <input type="hidden" name="ma" value="@dong.MaDanhGiaMon" /><input type="hidden" name="toiDaSao" value="@Model.ToiDaSao" />
+                            <button class="btn btn-sm btn-ghost" type="submit">@(dong.DaAn ? "Hiện lại" : "Ẩn")</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </table></div>
+    }
+</div>

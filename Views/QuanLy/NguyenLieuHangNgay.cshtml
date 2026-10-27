@@ -1,0 +1,40 @@
+@model List<BienDongKho>
+@{
+    ViewData["Title"] = "Nguyên liệu hàng ngày";
+    Layout = "_StaffLayout";
+    var tuNgay = (DateTime)ViewBag.TuNgay;
+    var denNgay = (DateTime)ViewBag.DenNgay;
+}
+<div class="panel no-print">
+    <form method="get" asp-action="NguyenLieuHangNgay" class="inline-form">
+        <label>Từ ngày <input class="input" type="date" name="tuNgay" value="@tuNgay.ToString("yyyy-MM-dd")" /></label>
+        <label>Đến ngày <input class="input" type="date" name="denNgay" value="@denNgay.ToString("yyyy-MM-dd")" max="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+        <button class="btn btn-sm" type="submit">Lọc</button>
+        <a class="btn btn-sm btn-ghost" asp-action="SoKho">📒 Xem sổ kho (kho tổng) →</a>
+    </form>
+</div>
+<p class="muted">Ghi lại việc <strong>trừ nguyên liệu tự động theo công thức món</strong> mỗi khi lên đơn, <strong>hoàn kho</strong> khi hủy đơn, và
+    <strong>nhận từ phiếu xuất kho</strong> (quản lý duyệt xuất từ kho tổng sang) - tất cả đều ở kho dùng hàng ngày.</p>
+
+<div class="panel table-wrap">
+    @if (Model.Count == 0)
+    {
+        <p class="muted">Không có biến động nào trong khoảng ngày đã chọn.</p>
+    }
+    else
+    {
+        <table class="tbl">
+            <tr><th>Thời gian</th><th>Nguyên liệu</th><th class="num">Thay đổi</th><th>Loại</th><th>Ghi chú</th></tr>
+            @foreach (var bd in Model)
+            {
+                <tr>
+                    <td>@bd.NgayTao.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@bd.NguyenLieu.TenNguyenLieu</td>
+                    <td class="num"><span class="badge @(bd.SoLuongThayDoi >= 0 ? "ok" : "red")">@(bd.SoLuongThayDoi >= 0 ? "+" : "")@bd.SoLuongThayDoi.SoThapPhan() @bd.NguyenLieu.DonViTinh</span></td>
+                    <td>@HangSoBienDong.Ten(bd.LoaiBienDong)</td>
+                    <td>@bd.GhiChu @(bd.MaDonHang != null ? "(đơn #" + bd.MaDonHang + ")" : "") @(bd.MaPhieuXuat != null ? "(phiếu xuất #" + bd.MaPhieuXuat + ")" : "")</td>
+                </tr>
+            }
+        </table>
+    }
+</div>

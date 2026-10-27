@@ -1,0 +1,37 @@
+@model List<BanAn>
+@{
+    ViewData["Title"] = "Bàn và mã QR";
+    Layout = "_StaffLayout";
+}
+<div class="actions" style="margin-bottom:1rem">
+    <a class="btn" asp-action="InQr">In mã QR tất cả bàn</a>
+    <form asp-action="ThemBan" method="post" class="inline-form">
+        <input class="input" name="tenBan" placeholder="Tên bàn mới, ví dụ: Bàn 7" required aria-label="Tên bàn mới" style="width:220px" />
+        <button class="btn btn-ghost" type="submit">Thêm bàn</button>
+    </form>
+</div>
+<p class="muted">Địa chỉ trong mã QR lấy từ cấu hình <code>CuaHang:DiaChiCongKhai</code> (appsettings.json). Đặt thành địa chỉ điện thoại khách truy cập được, không dùng localhost.</p>
+<div class="panel table-wrap">
+    <table class="tbl">
+        <tr><th>Mã QR</th><th>Bàn</th><th>Trạng thái</th><th>Thao tác</th></tr>
+        @foreach (var ban in Model)
+        {
+            <tr>
+                <td><img src="@Url.Action("AnhQrBan", "QuanLy", new { ma = ban.MaBan })" alt="Mã QR @ban.TenBan" width="72" height="72" /></td>
+                <td><strong>@ban.TenBan</strong></td>
+                <td>
+                    <form asp-action="KhoaMoBan" method="post" class="inline-form">
+                        <input type="hidden" name="ma" value="@ban.MaBan" />
+                        <button type="submit" class="badge @(ban.DangHoatDong ? "ok" : "red")" style="border:0;cursor:pointer">@(ban.DangHoatDong ? "Đang dùng" : "Tạm ngưng")</button>
+                    </form>
+                </td>
+                <td>
+                    <form asp-action="DoiMaQr" method="post" class="inline-form" onsubmit="return confirm('Đổi mã QR? Mã QR đã in của bàn này sẽ không còn dùng được.');">
+                        <input type="hidden" name="ma" value="@ban.MaBan" />
+                        <button class="btn btn-sm btn-ghost" type="submit">Đổi mã QR</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </table>
+</div>

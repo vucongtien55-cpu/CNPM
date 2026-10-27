@@ -1,0 +1,114 @@
+@{
+    var laQuanLy = User.IsInRole(HangSoVaiTro.QuanLy);
+    var tenController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var tenAction = ViewContext.RouteData.Values["action"]?.ToString();
+    string Active(string controller, params string[] danhSachAction) =>
+        tenController == controller && danhSachAction.Contains(tenAction) ? "active" : "";
+    var hoTen = User.FindFirst("HoTen")?.Value ?? User.Identity?.Name;
+    var tenQuan = CauHinh["CuaHang:Ten"] ?? "MIXUE";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - @tenQuan (nhân viên)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="staff">
+    @Html.AntiForgeryToken()
+    <div class="shell">
+        <aside class="sidebar">
+            <a class="brand" asp-controller="TrangChu" asp-action="Index"><span class="mascot" aria-hidden="true">☃️</span>@tenQuan</a>
+            <nav aria-label="Menu nhân viên">
+                <a class="@Active("ThuNgan", "Index")" asp-controller="ThuNgan" asp-action="Index">📋 Bảng đơn hàng</a>
+                <a class="@Active("ThuNgan", "TaoDon")" asp-controller="ThuNgan" asp-action="TaoDon">➕ Tạo đơn tại quầy</a>
+                <a class="@Active("ThuNgan", "LichSu")" asp-controller="ThuNgan" asp-action="LichSu">🕘 Lịch sử đơn</a>
+                <a class="@Active("ThuNgan", "DoiSoat")" asp-controller="ThuNgan" asp-action="DoiSoat">💰 Đối soát cuối ngày</a>
+                <a class="@Active("ThuNgan", "CanhBaoKho")" asp-controller="ThuNgan" asp-action="CanhBaoKho">⚠️ Cảnh báo kho / Xuất kho</a>
+                @if (laQuanLy)
+                {
+                    <div class="grp">Quản lý</div>
+                    <a class="@Active("QuanLy", "TongQuan")" asp-controller="QuanLy" asp-action="TongQuan">📊 Tổng quan</a>
+                    <a class="@Active("QuanLy", "LichSuDon")" asp-controller="QuanLy" asp-action="LichSuDon">🧾 Tra cứu đơn (quản lý)</a>
+                    <a class="@Active("QuanLy", "DanhGia")" asp-controller="QuanLy" asp-action="DanhGia">⭐ Đánh giá của khách</a>
+                    <a class="@Active("QuanLy", "BaoCaoLaiGop")" asp-controller="QuanLy" asp-action="BaoCaoLaiGop">📈 Báo cáo lãi gộp</a>
+                    <a class="@Active("QuanLy", "BaoCaoLaiRong")" asp-controller="QuanLy" asp-action="BaoCaoLaiRong">💵 Lãi ròng theo tháng</a>
+                    <a class="@Active("QuanLy", "DanhSachMon", "FormMon", "CongThuc")" asp-controller="QuanLy" asp-action="DanhSachMon">🧋 Món ăn</a>
+                    <a class="@Active("QuanLy", "DanhSachTopping")" asp-controller="QuanLy" asp-action="DanhSachTopping">🍡 Topping</a>
+                    <a class="@Active("QuanLy", "MaGiamGia", "FormMaGiamGia")" asp-controller="QuanLy" asp-action="MaGiamGia">🏷️ Mã giảm giá</a>
+                    <a class="@Active("QuanLy", "KhachHang")" asp-controller="QuanLy" asp-action="KhachHang">👥 Khách hàng thân thiết</a>
+                    <a class="@Active("QuanLy", "DanhSachBan", "InQr")" asp-controller="QuanLy" asp-action="DanhSachBan">🔳 Bàn và mã QR</a>
+                    <a class="@Active("QuanLy", "NhanVien", "FormNhanVien")" asp-controller="QuanLy" asp-action="NhanVien">👥 Nhân viên</a>
+                    <a class="@Active("QuanLy", "CaiDat")" asp-controller="QuanLy" asp-action="CaiDat">⚙️ Cài đặt quán</a>
+                    <a class="@Active("QuanLy", "NhatKy")" asp-controller="QuanLy" asp-action="NhatKy">📜 Nhật ký thao tác</a>
+                    <div class="grp">Kho</div>
+                    <a class="@Active("QuanLy", "Kho")" asp-controller="QuanLy" asp-action="Kho">📦 Tồn kho</a>
+                    <a class="@Active("QuanLy", "NhapKho")" asp-controller="QuanLy" asp-action="NhapKho">➕ Nhập kho (kho tổng)</a>
+                    <a class="@Active("QuanLy", "SoKho")" asp-controller="QuanLy" asp-action="SoKho">📒 Sổ kho (kho tổng)</a>
+                    <a class="@Active("QuanLy", "NguyenLieuHangNgay")" asp-controller="QuanLy" asp-action="NguyenLieuHangNgay">📅 Nguyên liệu hàng ngày</a>
+                    <a class="@Active("QuanLy", "PhieuXuatKho")" asp-controller="QuanLy" asp-action="PhieuXuatKho">📤 Duyệt phiếu xuất kho</a>
+                }
+            </nav>
+        </aside>
+        <div class="main">
+            <div class="topbar">
+                <h1>@ViewData["Title"]</h1>
+                <div class="userbox">
+                    <span>@hoTen</span>
+                    <span class="role-pill">@(laQuanLy ? "Quản lý" : "Thu ngân")</span>
+                    <a href="@Url.Action("DoiMatKhau", "TaiKhoan")">Đổi mật khẩu</a>
+                    <form asp-controller="TaiKhoan" asp-action="DangXuat" method="post"><button class="btn btn-sm btn-ghost" type="submit">Đăng xuất</button></form>
+                </div>
+            </div>
+            @if (TempData["CanhBao"] is string canhBao) { <div class="flash flash-warn" role="alert" style="border-radius:12px;margin-bottom:1rem">@canhBao</div> }
+            @if (TempData["ThanhCong"] is string thanhCong) { <div class="flash flash-ok" role="status" style="border-radius:12px;margin-bottom:1rem">@thanhCong</div> }
+            @RenderBody()
+        </div>
+    </div>
+    <dialog class="opt" id="hopQrChuyenKhoan" aria-labelledby="qrTieuDe">
+        <div class="hop-qr">
+            <h3 id="qrTieuDe" style="margin:0">Thu chuyển khoản</h3>
+            <div class="qr-so-tien" id="qrSoTien" aria-live="polite"></div>
+            <img id="qrAnh" alt="Mã VietQR cho khách quét" width="260" height="260" hidden />
+            <dl class="qr-thong-tin">
+                <dt>Ngân hàng</dt><dd id="qrNganHang"></dd>
+                <dt>Số tài khoản</dt><dd id="qrSoTk"></dd>
+                <dt>Chủ tài khoản</dt><dd id="qrChuTk"></dd>
+                <dt>Nội dung</dt><dd id="qrNoiDung"></dd>
+            </dl>
+            <p class="qr-luu-y">Chỉ bấm "Đã nhận tiền" sau khi kiểm tra app ngân hàng của quán thấy đúng số tiền và nội dung. Không tin ảnh chụp màn hình chuyển khoản của khách.</p>
+            <p class="cart-msg" id="qrLoi" role="alert"></p>
+            <div class="actions" style="justify-content:center">
+                <button type="button" class="btn btn-ok" id="qrXacNhan" disabled>✔ Đã nhận tiền</button>
+                <button type="button" class="btn btn-ghost" id="qrDong">Chưa nhận, đóng</button>
+            </div>
+        </div>
+    </dialog>
+    <dialog class="opt" id="hopHuyDon" aria-labelledby="huyTieuDe">
+        <form id="formHuyDon" style="display:grid;gap:1rem;padding:1.4rem;max-height:90vh;overflow:auto">
+            <div>
+                <h3 id="huyTieuDe" style="margin:0">Hủy đơn</h3>
+                <p class="muted" id="huyMoTaDon" style="margin:.2rem 0 0"></p>
+            </div>
+            <div class="field">
+                <label for="huyLyDo">Lý do hủy</label>
+                <select id="huyLyDo" class="input" required></select>
+            </div>
+            <div class="field" id="huyKhungKhac" hidden><label for="huyGhiChu">Nội dung cụ thể</label><input id="huyGhiChu" class="input" maxlength="300" /></div>
+            <label class="check" id="huyDongHoanKho"><input type="checkbox" id="huyHoanKho" checked /> Hoàn nguyên liệu đã trừ vào kho</label>
+            <div id="huyKhungHoanTien" class="qr-luu-y" hidden>
+                <label class="check"><input type="checkbox" id="huyDaHoanTien" /> Tôi đã hoàn <b id="huySoTienHoan"></b> cho khách</label>
+            </div>
+            <p class="cart-msg" id="huyLoi" role="alert"></p>
+            <div class="actions" style="justify-content:flex-end">
+                <button type="button" class="btn btn-ghost" id="huyDong">Đóng</button>
+                <button type="submit" class="btn btn-ink">Xác nhận hủy đơn</button>
+            </div>
+        </form>
+    </dialog>
+    <script src="~/js/nhanvien.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

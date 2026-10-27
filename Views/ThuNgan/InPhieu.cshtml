@@ -1,0 +1,57 @@
+@model DonHang
+@{
+    ViewData["Title"] = "Phiếu đơn " + Model.MaTheoDoi;
+    Layout = null;
+    var tenQuan = CauHinh["CuaHang:Ten"] ?? "MIXUE";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phiếu đơn @Model.MaTheoDoi</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body style="background:#F1F5FA">
+    <div class="actions no-print" style="justify-content:center;padding:1rem">
+        <button class="btn" type="button" onclick="window.print()">In phiếu</button>
+        <button class="btn btn-ghost" type="button" onclick="window.close()">Đóng</button>
+    </div>
+    <div class="phieu-wrap">
+        <div class="phieu">
+            <h2>@tenQuan</h2>
+            <p class="trung-tam">@CauHinh["CuaHang:DiaChi"]<br />ĐT: @CauHinh["CuaHang:SoDienThoai"]</p>
+            <hr />
+            <p style="margin:0"><strong>@Model.NoiPhucVu</strong> - Mã đơn: <strong>@Model.MaTheoDoi</strong></p>
+            <p class="trung-tam" style="text-align:left;margin:.2rem 0 0">@Model.NgayTao.ToString("dd/MM/yyyy HH:mm")@(!string.IsNullOrEmpty(Model.TenKhach) ? " - " + Model.TenKhach : "")</p>
+            <hr />
+            <table>
+                @foreach (var chiTiet in Model.DanhSachChiTiet)
+                {
+                    var tuyChon = new List<string>();
+                    if (chiTiet.KichCo != null) tuyChon.Add("Size " + chiTiet.KichCo.TenKichCo);
+                    if (chiTiet.MucDa != null) tuyChon.Add(chiTiet.MucDa.TenMuc);
+                    if (chiTiet.MucDuong != null) tuyChon.Add(chiTiet.MucDuong.TenMuc);
+                    tuyChon.AddRange(chiTiet.DanhSachTopping.Select(t => "+ " + t.Topping.TenTopping));
+                    <tr><td class="sl">@(chiTiet.SoLuong)x</td><td>@chiTiet.MonAn.TenMon</td><td class="tien">@chiTiet.ThanhTien.Tien()</td></tr>
+                    @if (tuyChon.Count > 0)
+                    {
+                        <tr><td></td><td colspan="2" class="tuy-chon">@string.Join(", ", tuyChon)</td></tr>
+                    }
+                    @if (!string.IsNullOrEmpty(chiTiet.GhiChu))
+                    {
+                        <tr><td></td><td colspan="2" class="tuy-chon">Ghi chú: @chiTiet.GhiChu</td></tr>
+                    }
+                }
+            </table>
+            <hr />
+            <table>
+                <tr><td><strong>Tổng cộng</strong></td><td class="tien tong">@Model.TongTien.Tien()</td></tr>
+                <tr><td>Thanh toán</td><td class="tien">@(Model.NgayThanhToan != null ? HangSoPhuongThuc.Ten(Model.MaPhuongThuc ?? 0) : "Chưa thanh toán")</td></tr>
+            </table>
+            <hr />
+            <p class="trung-tam">Cảm ơn bạn đã ghé @tenQuan!</p>
+        </div>
+    </div>
+</body>
+</html>

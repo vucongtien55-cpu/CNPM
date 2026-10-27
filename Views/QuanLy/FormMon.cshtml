@@ -1,0 +1,23 @@
+@model FormMonVM
+@{
+    ViewData["Title"] = Model.MaMonAn == 0 ? "Thêm món mới" : "Sửa món";
+    Layout = "_StaffLayout";
+}
+<div class="panel">
+    <form asp-action="FormMon" method="post" enctype="multipart/form-data" class="form-grid cols">
+        <input type="hidden" asp-for="MaMonAn" /><input type="hidden" asp-for="DuongDanAnh" />
+        <div asp-validation-summary="ModelOnly" class="err full"></div>
+        <div class="field full"><label asp-for="TenMon">Tên món</label><input asp-for="TenMon" class="input" /><span asp-validation-for="TenMon" class="err"></span></div>
+        <div class="field"><label asp-for="TenTiengAnh">Tên tiếng Anh</label><input asp-for="TenTiengAnh" class="input" /></div>
+        <div class="field"><label asp-for="MaNhomMon">Nhóm món</label>
+            <select asp-for="MaNhomMon" class="input" asp-items="@(new SelectList(Model.DanhSachNhom, nameof(NhomMon.MaNhomMon), nameof(NhomMon.TenNhomMon)))"></select>
+            <span asp-validation-for="MaNhomMon" class="err"></span></div>
+        <div class="field"><label asp-for="Gia">Giá (đồng)</label><input asp-for="Gia" type="number" min="0" step="500" class="input" /><span asp-validation-for="Gia" class="err"></span></div>
+        <div class="field"><label asp-for="TepAnh">Ảnh món (jpg, png, webp, tối đa 2MB)</label><input asp-for="TepAnh" type="file" accept=".jpg,.jpeg,.png,.webp" class="input" /><span asp-validation-for="TepAnh" class="err"></span></div>
+        @if (!string.IsNullOrEmpty(Model.DuongDanAnh)) { <div class="full"><img src="@Model.DuongDanAnh" alt="Ảnh hiện tại" style="height:90px;border-radius:14px" /></div> }
+        <div class="field full"><label asp-for="MoTa">Mô tả ngắn</label><textarea asp-for="MoTa" class="input" rows="2"></textarea></div>
+        <label class="check"><input type="checkbox" asp-for="LaBanChay" /> Gắn nhãn "Bán chạy"</label>
+        <label class="check"><input type="checkbox" asp-for="DangBan" /> Đang bán</label>
+        <div class="actions full"><button class="btn" type="submit">Lưu món</button><a class="btn btn-ghost" asp-action="DanhSachMon">Quay lại</a></div>
+    </form>
+</div>

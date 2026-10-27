@@ -1,0 +1,39 @@
+@model CaiDatCuaHang
+@{
+    ViewData["Title"] = "Cài đặt quán";
+    Layout = "_StaffLayout";
+}
+
+<div class="panel">
+    <form asp-action="CaiDat" method="post" class="form-grid cai-dat">
+        <div class="cai-dat-gio">
+            <div class="field">
+                <label for="GioMo">Giờ mở cửa</label>
+                <input id="GioMo" name="GioMo" type="time" class="input" value="@Model.GioMo.ToString("hh\\:mm")" required />
+            </div>
+            <div class="field">
+                <label for="GioDong">Giờ đóng cửa</label>
+                <input id="GioDong" name="GioDong" type="time" class="input" value="@Model.GioDong.ToString("hh\\:mm")" required />
+            </div>
+        </div>
+        <p class="muted" style="font-size:.85rem;margin:-.3rem 0 0">Đặt giờ mở = giờ đóng nếu quán phục vụ cả ngày. Nếu quán mở qua nửa đêm (ví dụ 18:00 đến 02:00), cứ nhập bình thường, hệ thống tự hiểu.</p>
+
+        <label class="check"><input type="checkbox" name="TamNgungNhanDon" value="true" checked="@Model.TamNgungNhanDon" /> Tạm ngưng nhận đơn trên web (dùng khi quán quá tải hoặc có sự cố)</label>
+
+        <div class="field">
+            <label for="SoPhutTuHuyDonMangDi">Tự hủy đơn mang đi chưa thanh toán sau (phút)</label>
+            <input id="SoPhutTuHuyDonMangDi" name="SoPhutTuHuyDonMangDi" type="number" min="0" max="240" class="input" value="@Model.SoPhutTuHuyDonMangDi" />
+            <p class="muted" style="font-size:.85rem;margin:.3rem 0 0">Đặt 0 để tắt tự hủy. Đơn ngồi tại bàn không bị ảnh hưởng vì có thể thanh toán sau.</p>
+        </div>
+
+        <label class="check"><input type="checkbox" name="TuAnMonHetNguyenLieu" value="true" checked="@Model.TuAnMonHetNguyenLieu" /> Tự chặn đặt món / topping khi kho không còn đủ nguyên liệu</label>
+
+        <div class="field">
+            <label for="SoDongTichMotDiem">Tích điểm thân thiết: số đồng / 1 điểm</label>
+            <input id="SoDongTichMotDiem" name="SoDongTichMotDiem" type="number" min="1000" step="1000" class="input" value="@Model.SoDongTichMotDiem" />
+            <p class="muted" style="font-size:.85rem;margin:.3rem 0 0">Ví dụ 10.000 nghĩa là cứ 10.000đ thanh toán (có để lại số điện thoại) thì khách được 1 điểm.</p>
+        </div>
+
+        <div class="actions"><button class="btn" type="submit">Lưu cài đặt</button></div>
+    </form>
+</div>

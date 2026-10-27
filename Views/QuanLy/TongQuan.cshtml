@@ -1,0 +1,86 @@
+@model TongQuanVM
+@{
+    ViewData["Title"] = "Tổng quan";
+    Layout = "_StaffLayout";
+    var giaTriLonNhat = Model.DoanhThu7Ngay.Max(x => x.GiaTri);
+    if (giaTriLonNhat == 0) giaTriLonNhat = 1;
+    var nhanHomNay = DateTime.Today.ToString("dd/MM");
+}
+
+<div class="stats">
+    <div class="stat red"><div class="k">Doanh thu hôm nay</div><div class="v">@Model.DoanhThuHomNay.Tien()</div></div>
+    <div class="stat"><div class="k">7 ngày gần nhất</div><div class="v">@Model.DoanhThuTuan.Tien()</div></div>
+    <div class="stat ok"><div class="k">Tháng này</div><div class="v">@Model.DoanhThuThang.Tien()</div></div>
+    <div class="stat sun"><div class="k">Đơn hôm nay</div><div class="v">@Model.SoDonHomNay</div></div>
+    <div class="stat red"><div class="k">Đơn chờ xác nhận</div><div class="v">@Model.DonChoXacNhan</div></div>
+    <div class="stat sun">
+        <div class="k">Đánh giá về quán</div>
+        <div class="v">@(Model.SoDanhGiaDichVu == 0 ? "Chưa có" : Model.DiemDichVu.ToString("0.0") + " / 5")</div>
+        <div style="font-size:.85rem"><span class="muted">@Model.SoDanhGiaDichVu lượt</span> <a asp-action="DanhGia">Xem chi tiết</a></div>
+    </div>
+</div>
+
+<div class="two">
+    <div class="panel">
+        <h2>Doanh thu 7 ngày gần nhất</h2>
+        <div class="bars">
+            @foreach (var (nhan, giaTri) in Model.DoanhThu7Ngay)
+            {
+                var chieuCao = (int)Math.Round((double)(giaTri / giaTriLonNhat) * 100);
+                <div class="bar @(nhan == nhanHomNay ? "today" : "")">
+                    <b>@(giaTri > 0 ? (giaTri / 1000).ToString("0") + "K" : "")</b>
+                    <i style="height:@(chieuCao)%"></i>
+                    <span>@nhan</span>
+                </div>
+            }
+        </div>
+        <p class="muted" style="margin:.8rem 0 0;font-size:.85rem">Chỉ tính đơn đã thu tiền và không bị hủy.</p>
+    </div>
+    <div class="panel">
+        <h2>Món bán chạy (30 ngày)</h2>
+        @if (Model.MonBanChay.Count == 0) { <p class="muted">Chưa có dữ liệu bán hàng.</p> }
+        else
+        {
+            <table class="tbl">
+                @foreach (var (ten, soLuong) in Model.MonBanChay)
+                {
+                    <tr><td>@ten</td><td class="num"><strong>@soLuong</strong> ly</td></tr>
+                }
+            </table>
+        }
+    </div>
+</div>
+
+<div class="panel">
+    <h2>Nguyên liệu sắp hết (kho dùng hàng ngày)</h2>
+    @if (Model.NguyenLieuSapHet.Count == 0) { <p class="muted">Tất cả nguyên liệu dùng hàng ngày còn đủ dùng.</p> }
+    else
+    {
+        <div class="table-wrap"><table class="tbl">
+            <tr><th>Nguyên liệu</th><th class="num">Tồn</th><th class="num">Còn làm được</th><th></th></tr>
+            @foreach (var nl in Model.NguyenLieuSapHet)
+            {
+                <tr><td>@nl.TenNguyenLieu</td><td class="num"><span class="badge red">@nl.SoLuongTon.SoThapPhan() @nl.DonViTinh</span></td>
+                    <td class="num">~@nl.SoCocConLai?.ToString("0") cốc (báo khi ≤ @nl.SoCocCanhBao)</td>
+                    <td><a class="btn btn-sm" asp-controller="ThuNgan" asp-action="CanhBaoKho">Lập phiếu xuất kho</a></td></tr>
+            }
+        </table></div>
+    }
+</div>
+
+<div class="panel">
+    <h2>Kho tổng sắp hết (cần đặt hàng nhà cung cấp)</h2>
+    @if (Model.NguyenLieuSapHetKhoTong.Count == 0) { <p class="muted">Kho tổng vẫn còn trên mức tối thiểu.</p> }
+    else
+    {
+        <div class="table-wrap"><table class="tbl">
+            <tr><th>Nguyên liệu</th><th class="num">Tồn</th><th class="num">Tối thiểu</th><th></th></tr>
+            @foreach (var nl in Model.NguyenLieuSapHetKhoTong)
+            {
+                <tr><td>@nl.TenNguyenLieu</td><td class="num"><span class="badge red">@nl.SoLuongTonKhoTong.SoThapPhan() @(nl.DonViNhap ?? nl.DonViTinh)</span></td>
+                    <td class="num">@nl.MucToiThieuKhoTong.SoThapPhan() @(nl.DonViNhap ?? nl.DonViTinh)</td>
+                    <td><a class="btn btn-sm" asp-action="NhapKho">Nhập kho</a></td></tr>
+            }
+        </table></div>
+    }
+</div>

@@ -1,0 +1,39 @@
+@model LichSuDonVM
+@{
+    ViewData["Title"] = "Lịch sử đơn hàng";
+    Layout = "_StaffLayout";
+}
+<div class="panel">
+    <form method="get" asp-action="LichSuDon" class="inline-form">
+        <label>Từ ngày <input class="input" type="date" name="tuNgay" value="@Model.TuNgay?.ToString("yyyy-MM-dd")" /></label>
+        <label>Đến ngày <input class="input" type="date" name="denNgay" value="@Model.DenNgay?.ToString("yyyy-MM-dd")" /></label>
+        <label>Trạng thái
+            <select class="input" name="trangThai">
+                <option value="">Tất cả</option>
+                @foreach (var ma in new[] { 1, 2, 3, 4, 5 })
+                {
+                    <option value="@ma" selected="@(Model.TrangThai == ma)">@HangSoTrangThai.Ten(ma)</option>
+                }
+            </select>
+        </label>
+        <button class="btn btn-sm" type="submit">Lọc</button>
+    </form>
+</div>
+<div class="panel table-wrap">
+    <table class="tbl">
+        <tr><th>Mã đơn</th><th>Nơi phục vụ</th><th>Trạng thái</th><th class="num">Tổng tiền</th><th>Thu tiền</th><th>Người xử lý</th><th>Thời gian</th></tr>
+        @foreach (var dong in Model.DanhSachDong)
+        {
+            <tr>
+                <td><strong>@dong.MaTheoDoi</strong></td>
+                <td>@dong.NoiPhucVu</td>
+                <td><span class="badge @DinhDang.LopTrangThai(dong.MaTrangThai)">@HangSoTrangThai.Ten(dong.MaTrangThai)</span></td>
+                <td class="num">@dong.TongTien.Tien()</td>
+                <td>@(dong.NgayThanhToan?.ToString("dd/MM HH:mm") ?? "Chưa thu")</td>
+                <td>@(dong.NguoiXuLy ?? "-")</td>
+                <td>@dong.NgayTao.ToString("dd/MM/yyyy HH:mm")</td>
+            </tr>
+        }
+    </table>
+    @if (Model.DanhSachDong.Count == 0) { <p class="muted" style="padding:1rem">Không có đơn nào khớp bộ lọc.</p> }
+</div>

@@ -1,0 +1,25 @@
+@model KichCoMonVM
+@{
+    ViewData["Title"] = "Size & giá: " + Model.MonAn.TenMon;
+    Layout = "_StaffLayout";
+}
+<div class="panel">
+    <p class="muted">Để trống hoặc 0 nghĩa là món <strong>không bán size đó</strong>. Nếu tất cả các size đều để trống, món sẽ bán theo giá mặc định (@Model.MonAn.Gia.Tien()) như trước, không hiện lựa chọn size cho khách.
+        Sau khi lưu size, nhớ sang trang <strong>Công thức</strong> khai báo định mức nguyên liệu riêng cho từng size.</p>
+    <form asp-action="KichCoMon" method="post">
+        <input type="hidden" name="ma" value="@Model.MonAn.MaMonAn" />
+        <div class="table-wrap"><table class="tbl" style="max-width:480px">
+            <tr><th>Size</th><th>Giá bán</th></tr>
+            @foreach (var kc in Model.TatCaKichCo)
+            {
+                var gia = Model.GiaTheoSize.GetValueOrDefault(kc.MaKichCo);
+                <tr>
+                    <td><strong>@kc.TenKichCo</strong>
+                        <input type="hidden" name="danhSachMaKichCo" value="@kc.MaKichCo" /></td>
+                    <td><input class="input" style="width:140px" type="number" step="1000" min="0" name="danhSachGia" value="@(gia > 0 ? gia.ToString() : "")" placeholder="Không bán" /></td>
+                </tr>
+            }
+        </table></div>
+        <div class="actions" style="margin-top:1rem"><button class="btn" type="submit">Lưu size & giá</button><a class="btn btn-ghost" asp-action="DanhSachMon">Quay lại</a></div>
+    </form>
+</div>

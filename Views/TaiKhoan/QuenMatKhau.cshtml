@@ -1,0 +1,48 @@
+@model QuenMatKhauVM
+@{
+    Layout = null;
+    var tenQuan = CauHinh["CuaHang:Ten"] ?? "MIXUE";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quên mật khẩu - @tenQuan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="login-wrap">
+        <div class="login-card">
+            <h1>🔑 Quên mật khẩu</h1>
+            <p class="muted">Dành cho thu ngân và quản lý. Nhập đúng tên đăng nhập và số điện thoại đã đăng ký với tài khoản để đặt lại mật khẩu.</p>
+            <form asp-action="QuenMatKhau" method="post">
+                <div asp-validation-summary="ModelOnly" class="err"></div>
+                <div class="field">
+                    <label asp-for="TenDangNhap">Tên đăng nhập</label>
+                    <input asp-for="TenDangNhap" class="input" autocomplete="username" autofocus />
+                    <span asp-validation-for="TenDangNhap" class="err"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="SoDienThoai">Số điện thoại đã đăng ký</label>
+                    <input asp-for="SoDienThoai" class="input" autocomplete="tel" placeholder="VD: 0912345678" />
+                    <span asp-validation-for="SoDienThoai" class="err"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="MatKhauMoi">Mật khẩu mới</label>
+                    <input asp-for="MatKhauMoi" type="password" class="input" autocomplete="new-password" />
+                    <span asp-validation-for="MatKhauMoi" class="err"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="NhapLaiMatKhau">Nhập lại mật khẩu mới</label>
+                    <input asp-for="NhapLaiMatKhau" type="password" class="input" autocomplete="new-password" />
+                    <span asp-validation-for="NhapLaiMatKhau" class="err"></span>
+                </div>
+                <button class="btn btn-lg" type="submit">Đặt lại mật khẩu</button>
+            </form>
+            <p style="margin:1rem 0 0"><a asp-action="DangNhap">← Quay lại đăng nhập</a></p>
+        </div>
+    </div>
+</body>
+</html>

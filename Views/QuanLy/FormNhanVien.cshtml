@@ -1,0 +1,18 @@
+@model FormNhanVienVM
+@{
+    ViewData["Title"] = "Thêm tài khoản nhân viên";
+    Layout = "_StaffLayout";
+}
+<div class="panel">
+    <form asp-action="FormNhanVien" method="post" class="form-grid cols">
+        <div asp-validation-summary="ModelOnly" class="err full"></div>
+        <div class="field"><label asp-for="TenDangNhap">Tên đăng nhập</label><input asp-for="TenDangNhap" class="input" autocomplete="off" /><span asp-validation-for="TenDangNhap" class="err"></span></div>
+        <div class="field"><label asp-for="HoTen">Họ tên</label><input asp-for="HoTen" class="input" /><span asp-validation-for="HoTen" class="err"></span></div>
+        <div class="field"><label asp-for="SoDienThoai">Số điện thoại</label><input asp-for="SoDienThoai" class="input" /></div>
+        <div class="field"><label asp-for="MaVaiTro">Vai trò</label>
+            <select asp-for="MaVaiTro" class="input" asp-items="@(new SelectList(Model.DanhSachVaiTro, nameof(VaiTro.MaVaiTro), nameof(VaiTro.TenVaiTro)))"></select>
+            <span asp-validation-for="MaVaiTro" class="err"></span></div>
+        <div class="field full"><label asp-for="MatKhau">Mật khẩu (tối thiểu 8 ký tự)</label><input asp-for="MatKhau" type="password" class="input" autocomplete="new-password" /><span asp-validation-for="MatKhau" class="err"></span></div>
+        <div class="actions full"><button class="btn" type="submit">Tạo tài khoản</button><a class="btn btn-ghost" asp-action="NhanVien">Quay lại</a></div>
+    </form>
+</div>

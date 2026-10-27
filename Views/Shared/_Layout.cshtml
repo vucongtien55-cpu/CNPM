@@ -1,0 +1,49 @@
+@{
+    var tenQuan = CauHinh["CuaHang:Ten"] ?? "MIXUE";
+    var tenController = ViewContext.RouteData.Values["controller"]?.ToString();
+    string Active(string ten) => string.Equals(tenController, ten, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - @tenQuan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    @Html.AntiForgeryToken()
+    <header class="site-header">
+        <div class="container">
+            <a class="brand" asp-controller="TrangChu" asp-action="Index"><span class="mascot" aria-hidden="true">☃️</span>@tenQuan</a>
+            <nav class="main-nav" aria-label="Điều hướng chính">
+                <a class="@Active("TrangChu")" asp-controller="TrangChu" asp-action="Index">Trang chủ</a>
+                <a class="@Active("ThucDon")" asp-controller="ThucDon" asp-action="Index">Thực đơn</a>
+                <a asp-controller="TrangChu" asp-action="Index" asp-fragment="ve-quan">Về quán</a>
+                <a class="@Active("DonHang")" asp-controller="DonHang" asp-action="DonCuaToi">Đơn của tôi</a>
+                <a asp-controller="DonHang" asp-action="DiemCuaToi">⭐ Điểm của tôi</a>
+            </nav>
+            <a class="btn btn-sm header-cta" asp-controller="ThucDon" asp-action="Index">Đặt món</a>
+        </div>
+    </header>
+
+    @if (TempData["CanhBao"] is string canhBao) { <div class="flash flash-warn" role="alert">@canhBao</div> }
+    @if (TempData["ThanhCong"] is string thanhCong) { <div class="flash flash-ok" role="status">@thanhCong</div> }
+
+    <partial name="_NutGoiNhanVien" />
+
+    <main>@RenderBody()</main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <span>© @DateTime.Now.Year @tenQuan. @CauHinh["CuaHang:DiaChi"]</span>
+            <span>Hotline <a href="tel:@CauHinh["CuaHang:SoDienThoai"]">@CauHinh["CuaHang:SoDienThoai"]</a> &nbsp;|&nbsp; <a asp-controller="TaiKhoan" asp-action="DangNhap">Dành cho nhân viên</a></span>
+        </div>
+    </footer>
+    <script src="~/js/goinhanvien.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

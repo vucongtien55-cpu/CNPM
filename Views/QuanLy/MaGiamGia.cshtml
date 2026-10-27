@@ -1,0 +1,48 @@
+@model List<MaGiamGia>
+@{
+    ViewData["Title"] = "Mã giảm giá";
+    Layout = "_StaffLayout";
+}
+
+<div class="actions" style="margin-bottom:1rem">
+    <a class="btn" asp-action="FormMaGiamGia">+ Tạo mã giảm giá mới</a>
+</div>
+
+<div class="panel table-wrap">
+    @if (Model.Count == 0)
+    {
+        <p class="muted">Chưa có mã giảm giá nào.</p>
+    }
+    else
+    {
+        <table class="tbl">
+            <tr><th>Mã code</th><th>Mô tả</th><th>Giá trị giảm</th><th>Đơn tối thiểu</th><th class="num">Đã dùng / tối đa</th><th>Hạn dùng</th><th>Trạng thái</th><th></th></tr>
+            @foreach (var ma in Model)
+            {
+                var hetHan = ma.NgayKetThuc != null && ma.NgayKetThuc < DateTime.Now;
+                var hetLuot = ma.SoLuotToiDa != null && ma.SoLuotDaDung >= ma.SoLuotToiDa;
+                <tr>
+                    <td><strong>@ma.MaCode</strong></td>
+                    <td>@(ma.MoTa ?? "-")</td>
+                    <td>@(ma.LoaiGiam == HangSoLoaiGiam.PhanTram ? $"{ma.GiaTriGiam.SoThapPhan()}%" + (ma.GiamToiDa != null ? $" (tối đa {ma.GiamToiDa.Value.Tien()})" : "") : ma.GiaTriGiam.Tien())</td>
+                    <td>@(ma.DonHangToiThieu > 0 ? ma.DonHangToiThieu.Tien() : "Không yêu cầu")</td>
+                    <td class="num">@ma.SoLuotDaDung / @(ma.SoLuotToiDa?.ToString() ?? "∞")</td>
+                    <td>@(ma.NgayKetThuc?.ToString("dd/MM/yyyy") ?? "Không giới hạn")</td>
+                    <td>
+                        @if (!ma.DangHoatDong) { <span class="badge red">Đã tắt</span> }
+                        else if (hetHan) { <span class="badge red">Hết hạn</span> }
+                        else if (hetLuot) { <span class="badge red">Hết lượt</span> }
+                        else { <span class="badge ok">Đang chạy</span> }
+                    </td>
+                    <td class="no-print" style="display:flex;gap:.4rem">
+                        <a class="btn btn-sm btn-ghost" asp-action="FormMaGiamGia" asp-route-ma="@ma.MaMaGiamGia">Sửa</a>
+                        <form asp-action="BatTatMaGiamGia" method="post" class="inline-form">
+                            <input type="hidden" name="ma" value="@ma.MaMaGiamGia" />
+                            <button class="btn btn-sm btn-ghost" type="submit">@(ma.DangHoatDong ? "Tắt" : "Bật")</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </table>
+    }
+</div>
